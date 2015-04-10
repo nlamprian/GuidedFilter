@@ -1,0 +1,6 @@
+<map id="algorithms.cpp" name="algorithms.cpp">
+<area shape="rect" id="node6" href="$algorithms_8hpp.html" title="Declares classes that organize the execution of OpenCL kernels. " alt="" coords="427,80,608,107"/>
+<area shape="rect" id="node7" href="$math_8hpp.html" title="Declares classes that organize the execution of OpenCL math kernels. " alt="" coords="329,163,479,189"/>
+<area shape="rect" id="node8" href="$common_8hpp.html" title="Declares classes used by the OpenCL interface classes in cl_algo. " alt="" coords="453,245,624,272"/>
+<area shape="rect" id="node9" href="$helperFuncs_8hpp.html" title="Declarations of helper functions for testing. " alt="" coords="625,155,751,197"/>
+</map>

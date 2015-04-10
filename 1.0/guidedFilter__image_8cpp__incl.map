@@ -1,0 +1,6 @@
+<map id="guidedFilter_image.cpp" name="guidedFilter_image.cpp">
+<area shape="rect" id="node14" href="$algorithms_8hpp.html" title="Declares classes that organize the execution of OpenCL kernels. " alt="" coords="1396,80,1577,107"/>
+<area shape="rect" id="node15" href="$math_8hpp.html" title="Declares classes that organize the execution of OpenCL math kernels. " alt="" coords="1411,163,1561,189"/>
+<area shape="rect" id="node16" href="$common_8hpp.html" title="Declares classes used by the OpenCL interface classes in cl_algo. " alt="" coords="1457,245,1628,272"/>
+<area shape="rect" id="node17" href="$helperFuncs_8hpp.html" title="Declarations of helper functions for testing. " alt="" coords="1637,155,1763,197"/>
+</map>

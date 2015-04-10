@@ -1,0 +1,13 @@
+<map id="common.hpp" name="common.hpp">
+<area shape="rect" id="node2" href="$algorithms_8hpp.html" title="Declares classes that organize the execution of OpenCL kernels. " alt="" coords="619,155,725,181"/>
+<area shape="rect" id="node10" href="$math_8hpp.html" title="Declares classes that organize the execution of OpenCL math kernels. " alt="" coords="757,80,832,107"/>
+<area shape="rect" id="node11" href="$math_8cpp.html" title="Defines classes that organize the execution of OpenCL math kernels. " alt="" coords="930,155,1005,181"/>
+<area shape="rect" id="node3" href="$algorithms_8cpp.html" title="Defines classes that organize the execution of OpenCL kernels. " alt="" coords="1000,237,1107,264"/>
+<area shape="rect" id="node4" href="$testsBoxFilter_8cpp.html" title="Google Test Unit Tests for the Box Filtering kernels. " alt="" coords="5,237,133,264"/>
+<area shape="rect" id="node5" href="$testsGuidedFilter_8cpp.html" title="Google Test Unit Tests for the Guided Filtering pipelines. " alt="" coords="157,237,304,264"/>
+<area shape="rect" id="node6" href="$testsImageSupport_8cpp.html" title="Google Test Unit Tests for the Image Support kernels. " alt="" coords="328,237,485,264"/>
+<area shape="rect" id="node7" href="$guidedFilter__image_8cpp.html" title="An example showcasing the effect of the Guided Filter algorithm on RGB images. " alt="" coords="510,237,665,264"/>
+<area shape="rect" id="node8" href="$guidedFilter__kinect__point__cloud_8cpp.html" title="An example showcasing the effect of the Guided Filter algorithm on depth images. " alt="" coords="691,230,820,271"/>
+<area shape="rect" id="node9" href="$guidedFilter__kinect__rgb_8cpp.html" title="An example showcasing the effect of the Guided Filter algorithm on color images. " alt="" coords="845,230,975,271"/>
+<area shape="rect" id="node12" href="$testsMath_8cpp.html" title="Google Test Unit Tests for math kernels. " alt="" coords="801,155,905,181"/>
+</map>

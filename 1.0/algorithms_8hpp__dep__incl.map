@@ -1,0 +1,9 @@
+<map id="algorithms.hpp" name="algorithms.hpp">
+<area shape="rect" id="node2" href="$algorithms_8cpp.html" title="Defines classes that organize the execution of OpenCL kernels. " alt="" coords="5,88,112,115"/>
+<area shape="rect" id="node3" href="$testsBoxFilter_8cpp.html" title="Google Test Unit Tests for the Box Filtering kernels. " alt="" coords="136,88,264,115"/>
+<area shape="rect" id="node4" href="$testsGuidedFilter_8cpp.html" title="Google Test Unit Tests for the Guided Filtering pipelines. " alt="" coords="288,88,435,115"/>
+<area shape="rect" id="node5" href="$testsImageSupport_8cpp.html" title="Google Test Unit Tests for the Image Support kernels. " alt="" coords="459,88,616,115"/>
+<area shape="rect" id="node6" href="$guidedFilter__image_8cpp.html" title="An example showcasing the effect of the Guided Filter algorithm on RGB images. " alt="" coords="641,88,796,115"/>
+<area shape="rect" id="node7" href="$guidedFilter__kinect__point__cloud_8cpp.html" title="An example showcasing the effect of the Guided Filter algorithm on depth images. " alt="" coords="821,81,951,122"/>
+<area shape="rect" id="node8" href="$guidedFilter__kinect__rgb_8cpp.html" title="An example showcasing the effect of the Guided Filter algorithm on color images. " alt="" coords="976,81,1105,122"/>
+</map>
