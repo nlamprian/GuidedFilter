@@ -1,10 +1,11 @@
 if ( BUILD_TESTS )
 
-    find_package ( GTest REQUIRED )
+    # find_package ( GTest REQUIRED )
     find_package ( Threads REQUIRED )
     find_package ( OpenCV REQUIRED )
 
-    include_directories ( ${GTEST_INCLUDE_DIRS}
+    include_directories ( ${CLUtils_INCLUDE_DIR} 
+                          ${GTEST_INCLUDE_DIRS}
                           ${OPENGL_INCLUDE_DIRS} )
 
     add_executable ( ${FNAME}_tests_img testsImageSupport.cpp )
@@ -12,28 +13,37 @@ if ( BUILD_TESTS )
     add_executable ( ${FNAME}_tests_box testsBoxFilter.cpp )
     add_executable ( ${FNAME}_tests_gf testsGuidedFilter.cpp )
 
-    target_link_libraries ( ${FNAME}_tests_img LINK_PUBLIC CLUtils HelperFuncs 
+    add_dependencies ( ${FNAME}_tests_img CLUtils googletest )
+    add_dependencies ( ${FNAME}_tests_math CLUtils googletest )
+    add_dependencies ( ${FNAME}_tests_box CLUtils googletest )
+    add_dependencies ( ${FNAME}_tests_gf CLUtils googletest )
+
+    target_link_libraries ( ${FNAME}_tests_img LINK_PUBLIC ${CLUtils_LIBRARIES} 
+                                                           HelperFuncs 
                                                            GFAlgorithms
                                                            ${OPENGL_LIBRARIES}
                                                            ${OPENCL_LIBRARIES}
                                                            ${GTEST_BOTH_LIBRARIES}
                                                            ${CMAKE_THREAD_LIBS_INIT} )
 
-    target_link_libraries ( ${FNAME}_tests_math LINK_PUBLIC CLUtils HelperFuncs 
+    target_link_libraries ( ${FNAME}_tests_math LINK_PUBLIC ${CLUtils_LIBRARIES} 
+                                                            HelperFuncs 
                                                             GFMath
                                                             ${OPENGL_LIBRARIES}
                                                             ${OPENCL_LIBRARIES}
                                                             ${GTEST_BOTH_LIBRARIES}
                                                             ${CMAKE_THREAD_LIBS_INIT} )
 
-    target_link_libraries ( ${FNAME}_tests_box LINK_PUBLIC CLUtils HelperFuncs 
+    target_link_libraries ( ${FNAME}_tests_box LINK_PUBLIC ${CLUtils_LIBRARIES} 
+                                                           HelperFuncs 
                                                            GFAlgorithms 
                                                            ${OPENGL_LIBRARIES}
                                                            ${OPENCL_LIBRARIES}
                                                            ${GTEST_BOTH_LIBRARIES}
                                                            ${CMAKE_THREAD_LIBS_INIT} )
 
-    target_link_libraries ( ${FNAME}_tests_gf LINK_PUBLIC CLUtils HelperFuncs 
+    target_link_libraries ( ${FNAME}_tests_gf LINK_PUBLIC ${CLUtils_LIBRARIES} 
+                                                          HelperFuncs 
                                                           GFAlgorithms GFMath
                                                           ${OPENGL_LIBRARIES}
                                                           ${OPENCL_LIBRARIES}
@@ -58,4 +68,4 @@ if ( BUILD_TESTS )
 
     add_custom_target ( check COMMAND ${CMAKE_CTEST_COMMAND} --verbose )
 
-endif (  )
+endif ( BUILD_TESTS )

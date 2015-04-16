@@ -37,6 +37,7 @@
 #include <string>
 #include <chrono>
 #include <mutex>
+#include <GL/glew.h>  // Add before CLUtils.hpp
 #include <CLUtils.hpp>
 #include <GuidedFilter/algorithms.hpp>
 

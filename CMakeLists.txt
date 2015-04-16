@@ -25,6 +25,7 @@ set ( COMMON_INCLUDES ${PROJECT_SOURCE_DIR}/include )
 include_directories ( ${COMMON_INCLUDES} 
                       ${OPENCL_INCLUDE_DIR} )
 
+add_subdirectory ( external/CLUtils )
 add_subdirectory ( src )
 add_subdirectory ( kernels )
 add_subdirectory ( examples )
@@ -32,5 +33,6 @@ add_subdirectory ( docs )
 
 if ( BUILD_TESTS )
     enable_testing (  )
+    add_subdirectory ( external/gtest )
     add_subdirectory ( tests )
-endif (  )
+endif ( BUILD_TESTS )

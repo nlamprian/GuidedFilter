@@ -1,4 +1,4 @@
-# - Try to find OpenCL
+# Try to find OpenCL
 # Once done this will define
 #  
 #  OPENCL_FOUND        - system has OpenCL
@@ -19,7 +19,6 @@ set(OPENCL_LIB_SEARCH_PATH
 	$ENV{AMDAPPSDKROOT}/lib/x86_64	# for ATI in windows
 )
 
-
 find_path(OPENCL_INCLUDE_DIR
     NAMES CL/cl.h CL/cl.hpp
     PATHS ${OPENCL_INC_SEARCH_PATH}
@@ -33,19 +32,20 @@ find_library(OPENCL_LIBRARY
 )
 
 include(FindPackageHandleStandardArgs)
+
 find_package_handle_standard_args(
 	OPENCL
 	DEFAULT_MSG
 	OPENCL_LIBRARY OPENCL_INCLUDE_DIR
 )
+
 if(OPENCL_FOUND)
 	set(OPENCL_LIBRARIES ${OPENCL_LIBRARY})
 else(OPENCL_FOUND)
 	set(OPENCL_LIBRARIES)
 endif(OPENCL_FOUND)
+
 mark_as_advanced(
 	OPENCL_INCLUDE_DIR
 	OPENCL_LIBRARY
 )
-
-

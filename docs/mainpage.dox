@@ -18,7 +18,7 @@ The code was developed and tested on `Ubuntu 14.04.1`, on a system with an `AMD 
 
 # Dependencies
 <hr>
-The project has a dependency on [CLUtils](https://github.com/pAIgn10/CLUtils). If you'd like to remove this dependency, you should be able to modify the kernel interface classes with minimal effort.
+The project has a dependency on [CLUtils](https://github.com/pAIgn10/CLUtils) (which is automatically downloaded by cmake). If you'd like to remove this dependency, you should be able to modify the kernel interface classes with minimal effort.
 
 There are currently 3 example applications. You'll need `OpenCV` to run `guided_filter_image`. You'll need a Kinect and [libfreenect](https://github.com/OpenKinect/libfreenect/) to run `guided_filter_kinect_rgb` or `guided_filter_kinect_point_cloud`.
 <br><br>

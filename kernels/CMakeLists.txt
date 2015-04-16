@@ -11,4 +11,4 @@ foreach ( SRC ${KERNEL_SRCS} )
         COMMAND ${CMAKE_COMMAND} -E copy_if_different ${SRC} ${PROJECT_BINARY_DIR}/kernels/${R_SRC}
     )
 
-endforeach (  )
+endforeach ( SRC )

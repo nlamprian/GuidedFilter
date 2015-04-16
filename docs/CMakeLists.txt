@@ -15,7 +15,7 @@ if ( DOXYGEN_FOUND )
 
     foreach ( DIR ${DOXYGEN_SEARCH_DIRS_LIST} )
         set ( DOXYGEN_SEARCH_DIRS "${DOXYGEN_SEARCH_DIRS} ${DIR}" )
-    endforeach (  )
+    endforeach ( DIR )
 
     configure_file ( 
         ${PROJECT_SOURCE_DIR}/docs/Doxyfile.in 
@@ -31,4 +31,4 @@ if ( DOXYGEN_FOUND )
         COMMAND cp -r ${PROJECT_SOURCE_DIR}/docs/less ${DOC_DIR}/html
     )
 
-endif (  )
+endif ( DOXYGEN_FOUND )

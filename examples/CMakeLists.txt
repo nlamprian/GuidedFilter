@@ -1,19 +1,23 @@
 find_package ( Freenect QUIET )
 find_package ( OpenCV QUIET )
 
+include_directories ( ${CLUtils_INCLUDE_DIR} )
+
 if ( OpenCV_FOUND )
 
     include_directories ( ${OpenCV_INCLUDE_DIR} )
 
     add_executable ( ${FNAME}_image guidedFilter_image.cpp )
 
-    target_link_libraries ( ${FNAME}_image CLUtils
+    add_dependencies ( ${FNAME}_image CLUtils )
+
+    target_link_libraries ( ${FNAME}_image ${CLUtils_LIBRARIES}
                                            GFAlgorithms GFMath
                                            ${OPENGL_LIBRARIES} 
                                            ${OpenCV_LIBRARIES} 
                                            ${OPENCL_LIBRARIES} )
 
-endif (  )
+endif ( OpenCV_FOUND )
 
 if ( FREENECT_FOUND )
 
@@ -28,7 +32,9 @@ if ( FREENECT_FOUND )
 
     add_executable ( ${FNAME}_kinect_rgb guidedFilter_kinect_rgb.cpp )
 
-    target_link_libraries ( ${FNAME}_kinect_rgb CLUtils
+    add_dependencies ( ${FNAME}_kinect_rgb CLUtils )
+
+    target_link_libraries ( ${FNAME}_kinect_rgb ${CLUtils_LIBRARIES}
                                                 GFAlgorithms GFMath 
                                                 ${OPENGL_LIBRARIES}
                                                 ${GLUT_LIBRARY}
@@ -42,7 +48,9 @@ if ( FREENECT_FOUND )
 
     add_executable ( ${FNAME}_kinect_point_cloud guidedFilter_kinect_point_cloud.cpp )
 
-    target_link_libraries ( ${FNAME}_kinect_point_cloud CLUtils
+    add_dependencies ( ${FNAME}_kinect_point_cloud CLUtils )
+
+    target_link_libraries ( ${FNAME}_kinect_point_cloud ${CLUtils_LIBRARIES}
                                                         GFAlgorithms GFMath 
                                                         ${OPENGL_LIBRARIES} 
                                                         ${GLUT_LIBRARY} 
@@ -51,4 +59,4 @@ if ( FREENECT_FOUND )
                                                         ${OPENCL_LIBRARIES} 
                                                         ${CMAKE_THREAD_LIBS_INIT} )
 
-endif (  )
+endif ( FREENECT_FOUND )
