@@ -17,7 +17,7 @@ find_path (
 
 find_library ( 
     GuidedFilter_LIBRARY 
-    NAMES GFAlgorithms GFMath HelperFuncs  
+    NAMES GFAlgorithms GFMath GFHelperFuncs  
     PATHS ${GuidedFilter_ROOT}/build/lib 
           /usr/lib 
           /usr/local/lib 

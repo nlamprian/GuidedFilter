@@ -1,15 +1,15 @@
 include_directories ( ${CLUtils_INCLUDE_DIR} )
 
-add_library ( HelperFuncs STATIC GuidedFilter/tests/helperFuncs.cpp )
+add_library ( GFHelperFuncs STATIC GuidedFilter/tests/helperFuncs.cpp )
 add_library ( GFAlgorithms STATIC GuidedFilter/algorithms.cpp )
 add_library ( GFMath STATIC GuidedFilter/math.cpp )
 
-add_dependencies ( HelperFuncs CLUtils )
+add_dependencies ( GFHelperFuncs CLUtils )
 add_dependencies ( GFAlgorithms CLUtils )
 add_dependencies ( GFMath CLUtils )
 
 target_include_directories ( 
-    HelperFuncs PUBLIC 
+    GFHelperFuncs PUBLIC 
     ${COMMON_INCLUDES} 
 )
 

@@ -25,7 +25,12 @@ set ( COMMON_INCLUDES ${PROJECT_SOURCE_DIR}/include )
 include_directories ( ${COMMON_INCLUDES} 
                       ${OPENCL_INCLUDE_DIR} )
 
-add_subdirectory ( external/CLUtils )
+# set ( CLUtils_ROOT <set-to-your-local-path-if-necessary> )
+find_package ( CLUtils REQUIRED )
+if ( NOT CLUtils_FOUND )
+    add_subdirectory ( external/CLUtils )
+endif ( NOT CLUtils_FOUND )
+
 add_subdirectory ( src )
 add_subdirectory ( kernels )
 add_subdirectory ( examples )
@@ -33,6 +38,11 @@ add_subdirectory ( docs )
 
 if ( BUILD_TESTS )
     enable_testing (  )
-    add_subdirectory ( external/gtest )
+    
+    find_package ( GTest REQUIRED )
+    if ( NOT GTEST_FOUND )
+        add_subdirectory ( external/gtest )
+    endif ( NOT GTEST_FOUND )
+    
     add_subdirectory ( tests )
 endif ( BUILD_TESTS )

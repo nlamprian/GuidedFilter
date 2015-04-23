@@ -17,7 +17,7 @@ The complete `documentation` is available [here](http://guided-filter.paign10.me
 # Dependencies
 The project has a dependency on [CLUtils](https://github.com/pAIgn10/CLUtils) (which is automatically downloaded by cmake). If you'd like to remove this dependency, you should be able to modify the kernel interface classes with minimal effort.
 
-There are currently 3 example applications. You'll need `OpenCV` to run `guided_filter_image`. You'll need a Kinect and [libfreenect](https://github.com/OpenKinect/libfreenect/) to run `guided_filter_kinect_rgb` or `guided_filter_kinect_point_cloud`.
+There are currently 3 example applications. For `guided_filter_image`, you'll need [OpenCV](https://github.com/jayrambhia/Install-OpenCV). For `guided_filter_kinect_rgb` and `guided_filter_kinect_point_cloud`, you'll need a Kinect and [libfreenect](https://github.com/OpenKinect/libfreenect/).
 
 # Compilation
 

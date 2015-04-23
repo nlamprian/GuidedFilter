@@ -1,6 +1,5 @@
 if ( BUILD_TESTS )
 
-    # find_package ( GTest REQUIRED )
     find_package ( Threads REQUIRED )
     find_package ( OpenCV REQUIRED )
 
@@ -19,7 +18,7 @@ if ( BUILD_TESTS )
     add_dependencies ( ${FNAME}_tests_gf CLUtils googletest )
 
     target_link_libraries ( ${FNAME}_tests_img LINK_PUBLIC ${CLUtils_LIBRARIES} 
-                                                           HelperFuncs 
+                                                           GFHelperFuncs 
                                                            GFAlgorithms
                                                            ${OPENGL_LIBRARIES}
                                                            ${OPENCL_LIBRARIES}
@@ -27,7 +26,7 @@ if ( BUILD_TESTS )
                                                            ${CMAKE_THREAD_LIBS_INIT} )
 
     target_link_libraries ( ${FNAME}_tests_math LINK_PUBLIC ${CLUtils_LIBRARIES} 
-                                                            HelperFuncs 
+                                                            GFHelperFuncs 
                                                             GFMath
                                                             ${OPENGL_LIBRARIES}
                                                             ${OPENCL_LIBRARIES}
@@ -35,7 +34,7 @@ if ( BUILD_TESTS )
                                                             ${CMAKE_THREAD_LIBS_INIT} )
 
     target_link_libraries ( ${FNAME}_tests_box LINK_PUBLIC ${CLUtils_LIBRARIES} 
-                                                           HelperFuncs 
+                                                           GFHelperFuncs 
                                                            GFAlgorithms 
                                                            ${OPENGL_LIBRARIES}
                                                            ${OPENCL_LIBRARIES}
@@ -43,7 +42,7 @@ if ( BUILD_TESTS )
                                                            ${CMAKE_THREAD_LIBS_INIT} )
 
     target_link_libraries ( ${FNAME}_tests_gf LINK_PUBLIC ${CLUtils_LIBRARIES} 
-                                                          HelperFuncs 
+                                                          GFHelperFuncs 
                                                           GFAlgorithms GFMath
                                                           ${OPENGL_LIBRARIES}
                                                           ${OPENCL_LIBRARIES}
