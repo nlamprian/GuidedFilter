@@ -1,7 +1,7 @@
 /*! \file common.hpp
  *  \brief Declares classes used by the OpenCL interface classes in `cl_algo`.
  *  \author Nick Lamprianidis
- *  \version 1.0
+ *  \version 1.1
  *  \date 2015
  *  \copyright The MIT License (MIT)
  *  \par

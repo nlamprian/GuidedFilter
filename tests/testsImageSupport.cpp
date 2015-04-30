@@ -5,7 +5,7 @@
  *        of the associated algorithms. They are used only for testing purposes, 
  *        and not for examining the performance of their GPU alternatives.
  *  \author Nick Lamprianidis
- *  \version 1.0
+ *  \version 1.1
  *  \date 2015
  *  \copyright The MIT License (MIT)
  *  \par
@@ -86,7 +86,7 @@ TEST (ImageSupport, separateRGBChannels_Float2Float)
         
         sRGB.write ();  // Copy data to device
 
-        sRGB.run ();  // Execute kernels (~ 0.570 ms)
+        sRGB.run ();  // Execute kernels (0.074 ms)
         
         // Copy results to host
         cl_float *R = (cl_float *) sRGB.read (cl_algo::SeparateRGB<C>::Memory::H_OUT_R, CL_FALSE);
@@ -179,7 +179,7 @@ TEST (ImageSupport, separateRGBChannels_Uchar2Float)
         
         sRGB.write ();  // Copy data to device
 
-        sRGB.run ();  // Execute kernels (~ 0.396 ms)
+        sRGB.run ();  // Execute kernels (0.081 ms)
         
         // Copy results to host
         cl_float *R = (cl_float *) sRGB.read (cl_algo::SeparateRGB<C>::Memory::H_OUT_R, CL_FALSE);
@@ -280,7 +280,7 @@ TEST (ImageSupport, combineRGBChannels_Float2Float)
         cRGB.write (cl_algo::CombineRGB<C>::Memory::D_IN_G);
         cRGB.write (cl_algo::CombineRGB<C>::Memory::D_IN_B);
 
-        cRGB.run ();  // Execute kernels (~ 0.590 ms)
+        cRGB.run ();  // Execute kernels (0.082 ms)
         
         cl_float *results = (cl_float *) cRGB.read ();  // Copy results to host
         // printBuffer ("Received:", results, 3, width * height);
@@ -371,7 +371,7 @@ TEST (ImageSupport, combineRGBChannels_Float2Uchar)
         cRGB.write (cl_algo::CombineRGB<C>::Memory::D_IN_G);
         cRGB.write (cl_algo::CombineRGB<C>::Memory::D_IN_B);
 
-        cRGB.run ();  // Execute kernels (~ 0.423 ms)
+        cRGB.run ();  // Execute kernels (0.082 ms)
         
         cl_uchar *results = (cl_uchar *) cRGB.read ();  // Copy results to host
         // printBuffer ("Received:", results, 3, width * height);
@@ -453,7 +453,7 @@ TEST (ImageSupport, depth_Ushort2Float)
         
         df.write ();  // Copy data to device
 
-        df.run ();  // Execute kernels (~ 0.130 ms)
+        df.run ();  // Execute kernels (0.014 ms)
         
         // Copy results to host
         cl_float *results = (cl_float *) df.read ();
@@ -535,7 +535,7 @@ TEST (ImageSupport, depthTo3D)
         
         d3.write ();  // Copy data to device
 
-        d3.run ();  // Execute kernels (~ 0.448 ms)
+        d3.run ();  // Execute kernels (0.045 ms)
         
         // Copy results to host
         cl_float4 *results = (cl_float4 *) d3.read ();
@@ -622,7 +622,7 @@ TEST (ImageSupport, rgbNorm)
         
         norm.write ();  // Copy data to device
 
-        norm.run ();  // Execute kernels (~ 0.550 ms)
+        norm.run ();  // Execute kernels (0.050 ms)
         
         cl_float *results = (cl_float *) norm.read ();  // Copy results to host
         // printBuffer ("Received:", results, 3, width * height);
@@ -669,6 +669,103 @@ TEST (ImageSupport, rgbNorm)
 
             // Benchmark
             pGPU.print (pCPU, "RGBNorm");
+        }
+
+    }
+    catch (const cl::Error &error)
+    {
+        std::cerr << error.what ()
+                  << " (" << clutils::getOpenCLErrorCodeString (error.err ()) 
+                  << ")"  << std::endl;
+        exit (EXIT_FAILURE);
+    }
+}
+
+
+/*! \brief Tests the **rgbdTo8D** kernel.
+ *  \details The kernel fuses geometry and color values into 8D feature points.
+ */
+TEST (ImageSupport, rgbdTo8D)
+{
+    try
+    {
+        const float f = 595.f;  // focal length (for Kinect)
+        const unsigned int width = 640, height = 480;
+        const unsigned int points = width * height;
+        const unsigned int bufferInSize = points * sizeof (cl_float);
+        const unsigned int bufferOutSize = points * sizeof (cl_float8);
+
+        // Setup the OpenCL environment
+        clutils::CLEnv clEnv;
+        clEnv.addContext (0);
+        clEnv.addQueue (0, 0, CL_QUEUE_PROFILING_ENABLE);
+        clEnv.addProgram (0, kernel_filename_img);
+
+        // Configure kernel execution parameters
+        clutils::CLEnvInfo<1> info (0, 0, 0, { 0 }, 0);
+        cl_algo::RGBDTo8D to8D (clEnv, info);
+        to8D.init (width, height, f);
+
+        // Initialize data (writes on staging buffer directly)
+        std::generate (to8D.hPtrInD, to8D.hPtrInD + points, rNum_0_10000);
+        std::generate (to8D.hPtrInR, to8D.hPtrInR + points, rNum_R_0_1);
+        std::generate (to8D.hPtrInG, to8D.hPtrInG + points, rNum_R_0_1);
+        std::generate (to8D.hPtrInB, to8D.hPtrInB + points, rNum_R_0_1);
+        // printBufferF ("Original D:", to8D.hPtrInD, width, height, 1);
+        // printBufferF ("Original R:", to8D.hPtrInR, width, height, 1);
+        // printBufferF ("Original G:", to8D.hPtrInG, width, height, 1);
+        // printBufferF ("Original B:", to8D.hPtrInB, width, height, 1);
+        
+        // Copy data to device
+        to8D.write (cl_algo::RGBDTo8D::Memory::D_IN_D);
+        to8D.write (cl_algo::RGBDTo8D::Memory::D_IN_R);
+        to8D.write (cl_algo::RGBDTo8D::Memory::D_IN_G);
+        to8D.write (cl_algo::RGBDTo8D::Memory::D_IN_B);
+
+        to8D.run ();  // Execute kernels (0.121 ms)
+        
+        cl_float8 *results = (cl_float8 *) to8D.read ();  // Copy results to host
+        // printBufferF ("Received:", (cl_float *) results, 8, points, 1);
+
+        // Produce reference 8D feature points
+        cl_float8 *ref8D = new cl_float8[points];
+        cpuRGBDTo8D (to8D.hPtrInD, to8D.hPtrInR, to8D.hPtrInG, to8D.hPtrInB, ref8D, width, height, f);
+        // printBufferF ("Expected:", (cl_float *) ref8D, 8, points, 1);
+
+        // Verify the array of 8D feature points
+        float eps = 4200 * std::numeric_limits<float>::epsilon ();  // 0.000500679
+        for (uint i = 0; i < points; ++i)
+        {
+            cl_float *refPoint = (cl_float *) &ref8D[i];
+            cl_float *gpuPoint = (cl_float *) &results[i];
+
+            for (uint j = 0; j < 8; ++j)
+                ASSERT_LT (std::abs (refPoint[j] - gpuPoint[j]), eps);
+        }
+
+        // Profiling ===========================================================
+        if (profiling)
+        {
+            const int nRepeat = 1;  /* Number of times to perform the tests. */
+
+            // CPU
+            clutils::CPUTimer<double, std::milli> cTimer;
+            clutils::ProfilingInfo<nRepeat> pCPU ("CPU");
+            for (int i = 0; i < nRepeat; ++i)
+            {
+                cTimer.start ();
+                cpuRGBDTo8D (to8D.hPtrInD, to8D.hPtrInR, to8D.hPtrInG, to8D.hPtrInB, ref8D, width, height, f);
+                pCPU[i] = cTimer.stop ();
+            }
+            
+            // GPU
+            clutils::GPUTimer<std::milli> gTimer (clEnv.devices[0][0]);
+            clutils::ProfilingInfo<nRepeat> pGPU ("GPU");
+            for (int i = 0; i < nRepeat; ++i)
+                pGPU[i] = to8D.run (gTimer);
+
+            // Benchmark
+            pGPU.print (pCPU, "rgbdTo8D");
         }
 
     }

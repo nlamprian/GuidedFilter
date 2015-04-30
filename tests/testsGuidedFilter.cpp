@@ -5,7 +5,7 @@
  *        of the associated algorithms. They are used only for testing purposes, 
  *        and not for examining the performance of their GPU alternatives.
  *  \author Nick Lamprianidis
- *  \version 1.0
+ *  \version 1.1
  *  \date 2015
  *  \copyright The MIT License (MIT)
  *  \par
@@ -95,7 +95,7 @@ TEST (GuidedFilter, guidedFilter)
 
         gf.write ();  // Copy data to device
 
-        gf.run ();  // Execute kernels (~ 7.4 ms)
+        gf.run ();  // Execute kernels (~ 0.790 ms)
         
         cl_float *results = (cl_float *) gf.read ();  // Copy results to host
         // printBufferF ("Received:", results, width, height, 3);
@@ -189,7 +189,7 @@ TEST (GuidedFilter, guidedFilterIp)
         gf.write (cl_algo::GuidedFilter<Ip>::Memory::D_IN_I);
         gf.write (cl_algo::GuidedFilter<Ip>::Memory::D_IN_P);
 
-        gf.run ();  // Execute kernels (~ 4.6 ms)
+        gf.run ();  // Execute kernels (~ 1.120 ms)
         
         cl_float *results = (cl_float *) gf.read ();  // Copy results to host
         // printBufferF ("Received:", results, width, height, 3);

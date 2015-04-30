@@ -6,7 +6,7 @@
  *           and Depth streams in OpenCL with the `GuidedFilter` pipeline. Then,
  *           it creates a point cloud and displays it in an OpenGL window.
  *  \author Nick Lamprianidis
- *  \version 1.0
+ *  \version 1.1
  *  \date 2015
  *  \copyright The MIT License (MIT)
  *  \par

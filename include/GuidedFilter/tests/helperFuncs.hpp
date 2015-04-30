@@ -1,7 +1,7 @@
 /*! \file helperFuncs.hpp
  *  \brief Declarations of helper functions for testing.
  *  \author Nick Lamprianidis
- *  \version 1.0
+ *  \version 1.1
  *  \date 2015
  *  \copyright The MIT License (MIT)
  *  \par
@@ -235,6 +235,39 @@ void cpuDepthTo3D (T *depth, cl_float4 *pCloud, uint32_t width, uint32_t height,
             pCloud[row * width + col] = { (col - (width - 1) / 2.f) * (float) d / f,
                                           (row - (height - 1) / 2.f) * (float) d / f,
                                           (float) d, 1.f };
+        }
+    }
+}
+
+
+/*! \brief Fuses geometry and color values into 8D feature points.
+ *
+ *  \param[in] D depth image.
+ *  \param[in] R channel R of RGB image.
+ *  \param[in] G channel G of RGB image.
+ *  \param[in] B channel B of RGB image.
+ *  \param[out] points array of 8D feature points.
+ *  \param[in] width width of the input arrays.
+ *  \param[in] height height of the input arrays.
+ *  \param[in] f focal length (for Kinect: 595.f).
+ */
+template <typename T>
+void cpuRGBDTo8D (T *D, T *R, T *G, T *B, cl_float8 *points, uint32_t width, uint32_t height, float f)
+{
+    for (uint row = 0; row < height; ++row)
+    {
+        for (uint col = 0; col < width; ++col)
+        {
+            int i = row * width + col;
+
+            T d = D[i];
+            T r = R[i];
+            T g = G[i];
+            T b = B[i];
+
+            points[i] = { (col - (width - 1) / 2.f) * (float) d / f,
+                          (row - (height - 1) / 2.f) * (float) d / f,
+                          (float) d, 1.f, r, g, b, 1.f };
         }
     }
 }

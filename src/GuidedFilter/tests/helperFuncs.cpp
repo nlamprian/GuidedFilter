@@ -1,7 +1,7 @@
 /*! \file helperFuncs.cpp
  *  \brief Helper functions for testing.
  *  \author Nick Lamprianidis
- *  \version 1.0
+ *  \version 1.1
  *  \date 2015
  *  \copyright The MIT License (MIT)
  *  \par

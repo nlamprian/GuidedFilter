@@ -4,7 +4,7 @@
  *           initialize the necessary buffers, set up the workspaces, and 
  *           run the kernels.
  *  \author Nick Lamprianidis
- *  \version 1.0
+ *  \version 1.1
  *  \date 2015
  *  \copyright The MIT License (MIT)
  *  \par
@@ -1430,6 +1430,309 @@ namespace cl_algo
     {
         scaling = _scaling;
         kernel.setArg (4, scaling);
+    }
+
+
+    /*! \param[in] _env opencl environment.
+     *  \param[in] _info opencl configuration. Specifies the context, queue, etc, to be used.
+     */
+    RGBDTo8D::RGBDTo8D (clutils::CLEnv &_env, clutils::CLEnvInfo<1> _info) : 
+        env (_env), info (_info), 
+        context (env.getContext (info.pIdx)), 
+        queue (env.getQueue (info.ctxIdx, info.qIdx[0])), 
+        kernel (env.getProgram (info.pgIdx), "rgbdTo8D")
+    {
+        wgMultiple = kernel.getWorkGroupInfo
+            <CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE> (env.devices[info.pIdx][info.dIdx]);
+    }
+
+
+    /*! \details This interface exists to allow CL memory sharing between different kernels.
+     *
+     *  \param[in] mem enumeration value specifying the requested memory object.
+     *  \return A reference to the requested memory object.
+     */
+    cl::Memory& RGBDTo8D::get (RGBDTo8D::Memory mem)
+    {
+        switch (mem)
+        {
+            case RGBDTo8D::Memory::H_IN_D:
+                return hBufferInD;
+            case RGBDTo8D::Memory::H_IN_R:
+                return hBufferInR;
+            case RGBDTo8D::Memory::H_IN_G:
+                return hBufferInG;
+            case RGBDTo8D::Memory::H_IN_B:
+                return hBufferInB;
+            case RGBDTo8D::Memory::H_OUT:
+                return hBufferOut;
+            case RGBDTo8D::Memory::D_IN_D:
+                return dBufferInD;
+            case RGBDTo8D::Memory::D_IN_R:
+                return dBufferInR;
+            case RGBDTo8D::Memory::D_IN_G:
+                return dBufferInG;
+            case RGBDTo8D::Memory::D_IN_B:
+                return dBufferInB;
+            case RGBDTo8D::Memory::D_OUT:
+                return dBufferOut;
+        }
+    }
+
+
+    /*! \details Sets up memory objects as necessary, and defines the kernel workspaces.
+     *  \note If you have assigned a memory object to one member variable of the class 
+     *        before the call to `init`, then that memory will be maintained. Otherwise, 
+     *        a new memory object will be created.
+     *        
+     *  \param[in] _width width of the array to be processed.
+     *  \param[in] _height height of the array to be processed.
+     *  \param[in] _f focal length.
+     *  \param[in] _scaling factor by which to scale the depth values before building the point cloud.
+     *  \param[in] _staging flag to indicate whether or not to instantiate the staging buffers.
+     */
+    void RGBDTo8D::init (unsigned int _width, unsigned int _height, float _f, float _scaling, Staging _staging)
+    {
+        width = _width; height = _height; f = _f;
+        points = width * height;
+        bufferInSize = points * sizeof (cl_float);
+        bufferOutSize = points * sizeof (cl_float8);
+        scaling = _scaling;
+        staging = _staging;
+
+        try
+        {
+            if (points == 0)
+                throw "The image cannot have zeroed dimensions";
+            if (points % 3 != 0)
+                throw "The number of pixels in the images must be a multiple of 3";
+        }
+        catch (const char *error)
+        {
+            std::cerr << "Error[RGBDTo8D]: " << error << std::endl;
+            exit (EXIT_FAILURE);
+        }
+
+        size_t wgM = wgMultiple;
+        while (points % (3 * wgM) != 0) wgM >>= 1;
+
+        // Set workspaces
+        global = cl::NDRange (points);
+        local = cl::NDRange (3 * wgM);
+
+        if (local[0] % wgMultiple)
+            std::cout << "Warning[RGBDTo8D]: "
+                      << "The work-group size [" << local[0] 
+                      << "] is not a multiple of the preferred size [" 
+                      << wgMultiple << "] on this device" << std::endl;
+
+        // Create staging buffers
+        bool io = false;
+        switch (staging)
+        {
+            case Staging::NONE:
+                hPtrInD = nullptr;
+                hPtrInR = nullptr;
+                hPtrInG = nullptr;
+                hPtrInB = nullptr;
+                hPtrOut = nullptr;
+                break;
+
+            case Staging::IO:
+                io = true;
+
+            case Staging::I:
+                if (hBufferInD () == nullptr)
+                    hBufferInD = cl::Buffer (context, CL_MEM_ALLOC_HOST_PTR, bufferInSize);
+                if (hBufferInR () == nullptr)
+                    hBufferInR = cl::Buffer (context, CL_MEM_ALLOC_HOST_PTR, bufferInSize);
+                if (hBufferInG () == nullptr)
+                    hBufferInG = cl::Buffer (context, CL_MEM_ALLOC_HOST_PTR, bufferInSize);
+                if (hBufferInB () == nullptr)
+                    hBufferInB = cl::Buffer (context, CL_MEM_ALLOC_HOST_PTR, bufferInSize);
+
+                hPtrInD = (cl_float *) queue.enqueueMapBuffer (
+                    hBufferInD, CL_FALSE, CL_MAP_WRITE, 0, bufferInSize);
+                hPtrInR = (cl_float *) queue.enqueueMapBuffer (
+                    hBufferInR, CL_FALSE, CL_MAP_WRITE, 0, bufferInSize);
+                hPtrInG = (cl_float *) queue.enqueueMapBuffer (
+                    hBufferInG, CL_FALSE, CL_MAP_WRITE, 0, bufferInSize);
+                hPtrInB = (cl_float *) queue.enqueueMapBuffer (
+                    hBufferInB, CL_FALSE, CL_MAP_WRITE, 0, bufferInSize);
+                queue.enqueueUnmapMemObject (hBufferInD, hPtrInD);
+                queue.enqueueUnmapMemObject (hBufferInR, hPtrInR);
+                queue.enqueueUnmapMemObject (hBufferInG, hPtrInG);
+                queue.enqueueUnmapMemObject (hBufferInB, hPtrInB);
+
+                if (!io)
+                {
+                    queue.finish ();
+                    hPtrOut = nullptr;
+                    break;
+                }
+
+            case Staging::O:
+                if (hBufferOut () == nullptr)
+                    hBufferOut = cl::Buffer (context, CL_MEM_ALLOC_HOST_PTR, bufferOutSize);
+
+                hPtrOut = (cl_float8 *) queue.enqueueMapBuffer (
+                    hBufferOut, CL_FALSE, CL_MAP_READ, 0, bufferOutSize);
+                queue.enqueueUnmapMemObject (hBufferOut, hPtrOut);
+                queue.finish ();
+
+                if (!io)
+                {
+                    hPtrInD = nullptr;
+                    hPtrInR = nullptr;
+                    hPtrInG = nullptr;
+                    hPtrInB = nullptr;
+                }
+                break;
+        }
+        
+        // Create device buffers
+        if (dBufferInD () == nullptr)
+            dBufferInD = cl::Buffer (context, CL_MEM_READ_ONLY, bufferInSize);
+        if (dBufferInR () == nullptr)
+            dBufferInR = cl::Buffer (context, CL_MEM_READ_ONLY, bufferInSize);
+        if (dBufferInG () == nullptr)
+            dBufferInG = cl::Buffer (context, CL_MEM_READ_ONLY, bufferInSize);
+        if (dBufferInB () == nullptr)
+            dBufferInB = cl::Buffer (context, CL_MEM_READ_ONLY, bufferInSize);
+        if (dBufferOut () == nullptr)
+            dBufferOut = cl::Buffer (context, CL_MEM_WRITE_ONLY, bufferOutSize);
+
+        // Set kernel arguments
+        kernel.setArg (0, dBufferInD);
+        kernel.setArg (1, dBufferInR);
+        kernel.setArg (2, dBufferInG);
+        kernel.setArg (3, dBufferInB);
+        kernel.setArg (4, dBufferOut);
+        kernel.setArg (5, cl::Local (3 * local[0] * sizeof (cl_float)));
+        kernel.setArg (6, width);
+        kernel.setArg (7, f);
+        kernel.setArg (8, scaling);
+    }
+
+
+    /*! \details The transfer happens from a staging buffer on the host to the 
+     *           associated (specified) device buffer.
+     *  
+     *  \param[in] mem enumeration value specifying an input device buffer.
+     *  \param[in] ptr a pointer to an array holding input data. If not NULL, the 
+     *                 data from `ptr` will be copied to the associated staging buffer.
+     *  \param[in] block a flag to indicate whether to perform a blocking 
+     *                   or a non-blocking operation.
+     *  \param[in] events a wait-list of events.
+     *  \param[out] event event associated with the write operation to the device buffer.
+     */
+    void RGBDTo8D::write (RGBDTo8D::Memory mem, void *ptr, bool block, 
+                           const std::vector<cl::Event> *events, cl::Event *event)
+    {
+        if (staging == Staging::I || staging == Staging::IO)
+        {
+            switch (mem)
+            {
+                case RGBDTo8D::Memory::D_IN_D:
+                    if (ptr != nullptr)
+                        std::copy ((cl_float *) ptr, (cl_float *) ptr + points, hPtrInD);
+                    queue.enqueueWriteBuffer (dBufferInD, block, 0, bufferInSize, hPtrInD, events, event);
+                    break;
+                case RGBDTo8D::Memory::D_IN_R:
+                    if (ptr != nullptr)
+                        std::copy ((cl_float *) ptr, (cl_float *) ptr + points, hPtrInR);
+                    queue.enqueueWriteBuffer (dBufferInR, block, 0, bufferInSize, hPtrInR, events, event);
+                    break;
+                case RGBDTo8D::Memory::D_IN_G:
+                    if (ptr != nullptr)
+                        std::copy ((cl_float *) ptr, (cl_float *) ptr + points, hPtrInG);
+                    queue.enqueueWriteBuffer (dBufferInG, block, 0, bufferInSize, hPtrInG, events, event);
+                    break;
+                case RGBDTo8D::Memory::D_IN_B:
+                    if (ptr != nullptr)
+                        std::copy ((cl_float *) ptr, (cl_float *) ptr + points, hPtrInB);
+                    queue.enqueueWriteBuffer (dBufferInB, block, 0, bufferInSize, hPtrInB, events, event);
+                    break;
+                default:
+                    break;
+            }
+        }
+    }
+
+
+    /*! \details The transfer happens from a device buffer to the associated 
+     *           (specified) staging buffer on the host.
+     *  
+     *  \param[in] mem enumeration value specifying an output staging buffer.
+     *  \param[in] block a flag to indicate whether to perform a blocking 
+     *                   or a non-blocking operation.
+     *  \param[in] events a wait-list of events.
+     *  \param[out] event event associated with the read operation to the staging buffer.
+     */
+    void* RGBDTo8D::read (RGBDTo8D::Memory mem, bool block, 
+                           const std::vector<cl::Event> *events, cl::Event *event)
+    {
+        if (staging == Staging::O || staging == Staging::IO)
+        {
+            switch (mem)
+            {
+                case RGBDTo8D::Memory::H_OUT:
+                    queue.enqueueReadBuffer (dBufferOut, block, 0, bufferOutSize, hPtrOut, events, event);
+                    return hPtrOut;
+                default:
+                    return nullptr;
+            }
+        }
+        return nullptr;
+    }
+
+
+    /*! \details The function call is non-blocking.
+     *
+     *  \param[in] events a wait-list of events.
+     *  \param[out] event event associated with the last kernel execution.
+     */
+    void RGBDTo8D::run (const std::vector<cl::Event> *events, cl::Event *event)
+    {
+        queue.enqueueNDRangeKernel (kernel, cl::NullRange, global, local, events, event);
+    }
+
+
+    /*! \return The focal length of the camera used.
+     */
+    float RGBDTo8D::getFocalLength ()
+    {
+        return f;
+    }
+
+
+    /*! \details Updates the kernel argument for the focal length.
+     *
+     *  \param[in] _f the focal length.
+     */
+    void RGBDTo8D::setFocalLength (float _f)
+    {
+        f = _f;
+        kernel.setArg (7, f);
+    }
+
+
+    /*! \return The scaling factor.
+     */
+    float RGBDTo8D::getScaling ()
+    {
+        return scaling;
+    }
+
+
+    /*! \details Updates the kernel argument for the scaling factor.
+     *
+     *  \param[in] _scaling scaling factor.
+     */
+    void RGBDTo8D::setScaling (float _scaling)
+    {
+        scaling = _scaling;
+        kernel.setArg (8, scaling);
     }
 
 

@@ -5,7 +5,7 @@
  *        of the associated algorithms. They are used only for testing purposes, 
  *        and not for examining the performance of their GPU alternatives.
  *  \author Nick Lamprianidis
- *  \version 1.0
+ *  \version 1.1
  *  \date 2015
  *  \copyright The MIT License (MIT)
  *  \par
@@ -85,7 +85,7 @@ TEST (Math, mult)
         mult.write (cl_algo::Math::Mult::Memory::D_IN_A);
         mult.write (cl_algo::Math::Mult::Memory::D_IN_B);
 
-        mult.run ();  // Execute kernels (~ 0.290 ms)
+        mult.run ();  // Execute kernels (0.026 ms)
         
         cl_float *results = (cl_float *) mult.read ();  // Copy results to host
         // printBufferF ("Received:", results, width, height, 1);
@@ -165,7 +165,7 @@ TEST (Math, pown)
 
         pown.write ();  // Copy data to device
 
-        pown.run ();  // Execute kernels (~ 0.300 ms)
+        pown.run ();  // Execute kernels (0.059 ms)
         
         cl_float *results = (cl_float *) pown.read ();  // Copy results to host
         // printBufferF ("Received:", results, width, height, 1);

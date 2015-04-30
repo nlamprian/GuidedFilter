@@ -5,7 +5,7 @@
  *        of the associated algorithms. They are used only for testing purposes, 
  *        and not for examining the performance of their GPU alternatives.
  *  \author Nick Lamprianidis
- *  \version 1.0
+ *  \version 1.1
  *  \date 2015
  *  \copyright The MIT License (MIT)
  *  \par
@@ -85,7 +85,7 @@ TEST (BoxFilter, prefixSum)
 
         scan.write ();  // Copy data to device
 
-        scan.run ();  // Execute kernels
+        scan.run ();  // Execute kernels (~ 0.036 ms)
         
         // Check partial (group) sums
         // cl_float groupSums[bufferSize / width];
@@ -170,7 +170,7 @@ TEST (BoxFilter, transpose)
         
         transpose.write ();  // Copy data to device
 
-        transpose.run ();  // Execute kernels
+        transpose.run ();  // Execute kernels (0.023 ms)
         
         cl_float *results = (cl_float *) transpose.read ();  // Copy results to host
         // printBufferF ("Received:", results, width, height, 3);
@@ -252,7 +252,7 @@ TEST (BoxFilter, sat)
 
         sat.write ();  // Copy data to device
 
-        sat.run ();  // Execute kernels
+        sat.run ();  // Execute kernels (~ 0.085 ms)
         
         cl_float *results = (cl_float *) sat.read ();  // Copy results to host
         // printBufferF ("Received:", results, height, width, 5);
@@ -338,7 +338,7 @@ TEST (BoxFilter, boxFilterSAT)
 
         box.write ();  // Copy data to device
 
-        box.run ();  // Execute kernels
+        box.run ();  // Execute kernels (~ 0.131 ms)
         
         cl_float *results = (cl_float *) box.read ();  // Copy results to host
         // printBufferF ("Received:", results, width, height, 5);
@@ -418,7 +418,7 @@ TEST (BoxFilter, boxFilter)
 
         box.write ();  // Copy data to device
 
-        box.run ();  // Execute kernels
+        box.run ();  // Execute kernels (~ 0.249 ms)
         
         cl_float *results = (cl_float *) box.read ();  // Copy results to host
         // printBufferF ("Received:", results, width, height, 5);

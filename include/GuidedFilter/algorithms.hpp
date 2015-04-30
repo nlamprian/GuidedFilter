@@ -4,7 +4,7 @@
  *           initialize the necessary buffers, set up the workspaces, 
  *           and run the kernels.
  *  \author Nick Lamprianidis
- *  \version 1.0
+ *  \version 1.1
  *  \date 2015
  *  \copyright The MIT License (MIT)
  *  \par
@@ -702,7 +702,119 @@ namespace cl_algo
     };
 
 
-        /*! \brief Interface class for the `rgbNorm` kernel.
+    /*! \brief Interface class for the `rgbdTo8D` kernel.
+     *  \details `rgbdTo8D` transforms and fuses together geometry and color 
+     *           information into 8D feature points.
+     *           For more details, look at the kernel's documentation.
+     *  \note The `rgbdTo8D` kernel is available in `kernels/imageSupport_kernels.cl`.
+     *  \note The class creates its own buffers. If you would like to provide 
+     *        your own buffers, call `get` to get references to the placeholders 
+     *        within the class and assign them to your buffers. You will have to 
+     *        do this strictly before the call to `init`. You can also call `get` 
+     *        (after the call to `init`) to get a reference to a buffer within 
+     *        the class and assign it to another kernel class instance further 
+     *        down in your task pipeline.
+     *  
+     *        The following input/output `OpenCL` memory objects are created by a `RGBDTo8D` instance:<br>
+     *        | Name | Type | Placement | I/O | Use | Properties | Size |
+     *        | ---  |:---: |   :---:   |:---:|:---:|   :---:    |:---: |
+     *        | H_IN_D| Buffer | Host   | I | Staging     | CL_MEM_READ_WRITE | \f$width*height*sizeof\ (cl\_float) \f$ |
+     *        | H_IN_R| Buffer | Host   | I | Staging     | CL_MEM_READ_WRITE | \f$width*height*sizeof\ (cl\_float) \f$ |
+     *        | H_IN_G| Buffer | Host   | I | Staging     | CL_MEM_READ_WRITE | \f$width*height*sizeof\ (cl\_float) \f$ |
+     *        | H_IN_B| Buffer | Host   | I | Staging     | CL_MEM_READ_WRITE | \f$width*height*sizeof\ (cl\_float) \f$ |
+     *        | H_OUT | Buffer | Host   | O | Staging     | CL_MEM_READ_WRITE | \f$width*height*sizeof\ (cl\_float8)\f$ |
+     *        | D_IN_D| Buffer | Device | I | Processing  | CL_MEM_READ_ONLY  | \f$width*height*sizeof\ (cl\_float) \f$ |
+     *        | D_IN_R| Buffer | Device | I | Processing  | CL_MEM_READ_ONLY  | \f$width*height*sizeof\ (cl\_float) \f$ |
+     *        | D_IN_G| Buffer | Device | I | Processing  | CL_MEM_READ_ONLY  | \f$width*height*sizeof\ (cl\_float) \f$ |
+     *        | D_IN_B| Buffer | Device | I | Processing  | CL_MEM_READ_ONLY  | \f$width*height*sizeof\ (cl\_float) \f$ |
+     *        | D_OUT | Buffer | Device | O | Processing  | CL_MEM_WRITE_ONLY | \f$width*height*sizeof\ (cl\_float8)\f$ |
+     */
+    class RGBDTo8D
+    {
+    public:
+        /*! \brief Enumerates the memory objects handled by the class.
+         *  \note `H_*` names refer to staging buffers on the host.
+         *  \note `D_*` names refer to buffers on the device.
+         *  
+         *  \param H_IN_D input staging buffer for the %Depth image.
+         *  \param H_IN_R input staging buffer for channel R of the RGB image.
+         *  \param H_IN_G input staging buffer for channel G of the RGB image.
+         *  \param H_IN_B input staging buffer for channel B of the RGB image.
+         *  \param H_OUT output staging buffer.
+         *  \param D_IN_D input buffer for the %Depth image.
+         *  \param D_IN_R input buffer for channel R of the RGB image.
+         *  \param D_IN_G input buffer for channel G of the RGB image.
+         *  \param D_IN_B input buffer for channel B of the RGB image.
+         *  \param D_OUT output buffer.
+         */
+        enum class Memory : uint8_t { H_IN_D, H_IN_R, H_IN_G, H_IN_B, H_OUT, 
+                                      D_IN_D, D_IN_R, D_IN_G, D_IN_B, D_OUT };
+
+        /*! \brief Configures an OpenCL environment as specified by `_info`. */
+        RGBDTo8D (clutils::CLEnv &_env, clutils::CLEnvInfo<1> _info);
+        /*! \brief Returns a reference to an internal memory object. */
+        cl::Memory& get (RGBDTo8D::Memory mem);
+        /*! \brief Configures kernel execution parameters. */
+        void init (unsigned int _width, unsigned int _height, float _f, float _scaling = 1.f, Staging _staging = Staging::IO);
+        /*! \brief Performs a data transfer to a device buffer. */
+        void write (RGBDTo8D::Memory mem = RGBDTo8D::Memory::D_IN_D, void *ptr = nullptr, bool block = CL_FALSE, 
+                    const std::vector<cl::Event> *events = nullptr, cl::Event *event = nullptr);
+        /*! \brief Performs a data transfer to a staging buffer. */
+        void* read (RGBDTo8D::Memory mem = RGBDTo8D::Memory::H_OUT, bool block = CL_TRUE, 
+                    const std::vector<cl::Event> *events = nullptr, cl::Event *event = nullptr);
+        /*! \brief Executes the necessary kernels. */
+        void run (const std::vector<cl::Event> *events = nullptr, cl::Event *event = nullptr);
+        /*! \brief Gets the focal length. */
+        float getFocalLength ();
+        /*! \brief Sets the focal length. */
+        void setFocalLength (float _f);
+        /*! \brief Gets the scaling factor. */
+        float getScaling ();
+        /*! \brief Sets the scaling factor. */
+        void setScaling (float _scaling);
+
+        cl_float *hPtrInD;  /*!< Mapping of the input staging buffer for the %Depth image. */
+        cl_float *hPtrInR;  /*!< Mapping of the input staging buffer for channel R of the RGB image. */
+        cl_float *hPtrInG;  /*!< Mapping of the input staging buffer for channel G of the RGB image. */
+        cl_float *hPtrInB;  /*!< Mapping of the input staging buffer for channel B of the RGB image. */
+        cl_float8 *hPtrOut;  /*!< Mapping of the output staging buffer. */
+
+    private:
+        clutils::CLEnv &env;
+        clutils::CLEnvInfo<1> info;
+        cl::Context context;
+        cl::CommandQueue queue;
+        cl::Kernel kernel;
+        cl::NDRange global, local;
+        Staging staging;
+        size_t wgMultiple;
+        unsigned int width, height, points;
+        unsigned int bufferInSize, bufferOutSize;
+        float f, scaling;
+        cl::Buffer hBufferInD, hBufferInR, hBufferInG, hBufferInB, hBufferOut;
+        cl::Buffer dBufferInD, dBufferInR, dBufferInG, dBufferInB, dBufferOut;
+
+    public:
+        /*! \brief Executes the necessary kernels.
+         *  \details This `run` instance is used for profiling.
+         *  
+         *  \param[in] timer `GPUTimer` that does the profiling of the kernel executions.
+         *  \param[in] events a wait-list of events.
+         *  \return Τhe total execution time measured by the timer.
+         */
+        template <typename period>
+        double run (clutils::GPUTimer<period> &timer, const std::vector<cl::Event> *events = nullptr)
+        {
+            queue.enqueueNDRangeKernel (kernel, cl::NullRange, global, local, events, &timer.event ());
+            queue.flush (); timer.wait ();
+
+            return timer.duration ();
+        }
+
+    };
+
+
+    /*! \brief Interface class for the `rgbNorm` kernel.
      *  \details `rgbNorm` performs RGB color normalization.
      *           For more details, look at the kernel's documentation.
      *  \note The `rgbNorm` kernel is available in `kernels/imageSupport_kernels.cl`.

@@ -33,7 +33,7 @@
  *           is broken out to the individual channels, R, G, B.
  *  \note The global workspace should be one-dimensional `(= # pixels 
  *        in the input buffer)`. The global and local workspaces 
- *        should be a **multiple of 3**.
+ *        should be **multiples of 3**.
  *
  *  \param[in] AoS input buffer with the following (logical) arrangement: float[total-pixels][3].
  *                 Each row contains the RGB values of a pixel.
@@ -50,7 +50,6 @@ void separateRGBChannels_Float2Float (global float *AoS,
     global float *addr[] = { r, g, b };
 
     // Workspace dimensions
-    uint pixels = get_global_size (0);
     uint lXdim = get_local_size (0);
 
     // Workspace indices
@@ -86,7 +85,7 @@ void separateRGBChannels_Float2Float (global float *AoS,
  *           structure is broken out to the individual channels, R, G, B.
  *  \note The global workspace should be one-dimensional `(= # pixels 
  *        in the input buffer)`. The global and local workspaces 
- *        should be a **multiple of 3**.
+ *        should be **multiples of 3**.
  *
  *  \param[in] AoS input buffer with the following (logical) arrangement: uchar[total-pixels][3].
  *                 Each row contains the RGB values of a pixel.
@@ -103,7 +102,6 @@ void separateRGBChannels_Uchar2Float (global uchar *AoS,
     global float *addr[] = { r, g, b };
 
     // Workspace dimensions
-    uint pixels = get_global_size (0);
     uint lXdim = get_local_size (0);
 
     // Workspace indices
@@ -141,7 +139,7 @@ void separateRGBChannels_Uchar2Float (global uchar *AoS,
  *           is broken out to the individual channels, R, G, B.
  *  \note The global workspace should be one-dimensional `(= # pixels 
  *        in the input buffer)`. The global and local workspaces 
- *        should be a **multiple of 3**.
+ *        should be **multiples of 3**.
  *
  *  \param[in] r input buffer with all the pixel values in channel R.
  *  \param[in] g input buffer with all the pixel values in channel G.
@@ -157,7 +155,6 @@ void combineRGBChannels_Float2Float (global float *r, global float *g, global fl
     global float *addr[] = { r, g, b };
 
     // Workspace dimensions
-    uint pixels = get_global_size (0);
     uint lXdim = get_local_size (0);
 
     // Workspace indices
@@ -187,7 +184,7 @@ void combineRGBChannels_Float2Float (global float *r, global float *g, global fl
  *           out to the individual channels, R, G, B.
  *  \note The global workspace should be one-dimensional `(= # pixels 
  *        in the input buffer)`. The global and local workspaces 
- *        should be a **multiple of 3**.
+ *        should be **multiples of 3**.
  *
  *  \param[in] r input buffer with all the pixel values in channel R.
  *  \param[in] g input buffer with all the pixel values in channel G.
@@ -203,7 +200,6 @@ void combineRGBChannels_Float2Uchar (global float *r, global float *g, global fl
     global float *addr[] = { r, g, b };
 
     // Workspace dimensions
-    uint pixels = get_global_size (0);
     uint lXdim = get_local_size (0);
 
     // Workspace indices
@@ -253,7 +249,7 @@ void depth_Ushort2Float (global ushort4 *depth, global float4 *fDepth, float sca
  *  \note The global workspace should be equal to the dimensions of the image.
  *
  *  \param[in] depth depth image.
- *  \param[out] pCloud point cloud.
+ *  \param[out] pCloud point cloud (in 4D homogeneous coordinates with \f$ w=1 \f$).
  *  \param[in] f focal length (for Kinect: 595.f).
  *  \param[in] scaling factor by which to scale the depth values before building the point cloud.
  */
@@ -274,7 +270,7 @@ void depthTo3D (global float *depth, global float4 *pCloud, float f, float scali
     float d = depth[idx] * scaling;
     float4 point = { (gX - (cols - 1) / 2.f) * d / f,  // X = (x - cx) * d / fx
                      (gY - (rows - 1) / 2.f) * d / f,  // Y = (y - cy) * d / fy
-                     d, 1.f };                         // Z = d
+                      d, 1.f };                        // Z = d
 
     pCloud[idx] = point;
 }
@@ -301,4 +297,68 @@ void rgbNorm (global float *in, global float *out)
     // Normalize and store
     pixel *= factor;
     vstore3 (pixel, gX, out);
+}
+
+
+/*! \brief Fuses 3D space coordinates and RGB color values into 
+ *         8D feature points (homogeneous coordinates + RGBA values).
+ *  \details Gathers the R, G, B channel values and assembles them into a pixel 
+ *           with opacity set to 1.0. Transforms the depth values into 4D
+ *           homogeneous coordinates, setting \f$ w=1 \f$.
+ *  \note The global workspace should be one-dimensional `(= # elements 
+ *        in the input buffers)`. Both global and local workspaces 
+ *        should be **multiples of 3**.
+ *
+ *  \param[in] depth depth array.
+ *  \param[in] r channel R array.
+ *  \param[in] g channel G array.
+ *  \param[in] b channel B array.
+ *  \param[out] p8D array of 8D elements (homogeneous coordinates + RGBA values).
+ *  \param[in] data local buffer with size `3 x (# work-items in work-group) x sizeof (float)` bytes.
+ *  \param[in] cols number of columns (width) in the input images.
+ *  \param[in] f focal length (for Kinect: 595.f).
+ *  \param[in] scaling factor by which to scale the depth values before building the point cloud.
+ */
+kernel
+void rgbdTo8D (global float *depth, global float *r, global float *g, global float *b, 
+               global float8 *p8D, local float *data, uint cols, float f, float scaling)
+{
+    global float *addr[] = { r, g, b };
+
+    // Workspace dimensions
+    uint rows = get_global_size (0) / cols;
+    uint lXdim = get_local_size (0);
+
+    // Workspace indices
+    uint gX = get_global_id (0);
+    uint lX = get_local_id (0);
+    uint wgX = get_group_id (0);
+
+    // Collect RGBA values =====================================================
+
+    // Each 1/3 work-items in the work-group reads in 
+    // a triplet of values on channel, R, G, B, respectively
+    uchar channel = (3 * lX) / lXdim;
+    uint rank = lX % (lXdim / 3);
+    global float *img = addr[channel];
+    vstore3 (vload3 (rank, &img[wgX * lXdim]), rank, &data[channel * lXdim]);
+    barrier (CLK_LOCAL_MEM_FENCE);
+
+    // Each work-item in the work-group assembles a pixel    
+    float4 color = { data[lX], data[lXdim + lX], data[2 * lXdim + lX], 1.f };
+
+    // Build 3D coordinates ====================================================
+
+    uint x = get_global_id (0) % cols;
+    uint y = get_global_id (0) / cols;
+
+    float d = depth[gX] * scaling;
+    float4 geometry = { (x - (cols - 1) / 2.f) * d / f,  // X = (x - cx) * d / fx
+                        (y - (rows - 1) / 2.f) * d / f,  // Y = (y - cy) * d / fy
+                         d, 1.f };                       // Z = d
+
+    // Store feature point =====================================================
+
+    float8 point = (float8) (geometry, color);
+    p8D[gX] = point;
 }
