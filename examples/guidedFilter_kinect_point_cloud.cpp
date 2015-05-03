@@ -6,7 +6,7 @@
  *           and Depth streams in OpenCL with the `GuidedFilter` pipeline. Then,
  *           it creates a point cloud and displays it in an OpenGL window.
  *  \author Nick Lamprianidis
- *  \version 1.1
+ *  \version 1.1.1
  *  \date 2015
  *  \copyright The MIT License (MIT)
  *  \par
@@ -73,7 +73,7 @@ float focalLength = 595.f;
 
 // OpenCL
 const std::vector<std::string> kernel_files = { "kernels/imageSupport_kernels.cl", 
-                                                "kernels/prefixSum_kernels.cl", 
+                                                "kernels/scan_kernels.cl", 
                                                 "kernels/transpose_kernels.cl", 
                                                 "kernels/boxFilter_kernels.cl",
                                                 "kernels/math_kernels.cl", 
@@ -151,20 +151,20 @@ public:
         buffersGL.emplace_back (context, CL_MEM_WRITE_ONLY, glDepthBuf);
 
         // Initialize the Guided Image Filtering pipeline
-        kGFRGB.get (cl_algo::Kinect::GuidedFilterRGB<cl_algo::Kinect::GuidedFilterRGBConfig::SEPARATED>
+        kGFRGB.get (cl_algo::GF::Kinect::GuidedFilterRGB<cl_algo::GF::Kinect::GuidedFilterRGBConfig::SEPARATED>
             ::Memory::D_OUT_R) = cl::Buffer (context, CL_MEM_READ_WRITE, bufferSize);
-        kGFRGB.get (cl_algo::Kinect::GuidedFilterRGB<cl_algo::Kinect::GuidedFilterRGBConfig::SEPARATED>
+        kGFRGB.get (cl_algo::GF::Kinect::GuidedFilterRGB<cl_algo::GF::Kinect::GuidedFilterRGBConfig::SEPARATED>
             ::Memory::D_OUT_G) = cl::Buffer (context, CL_MEM_READ_WRITE, bufferSize);
-        kGFRGB.get (cl_algo::Kinect::GuidedFilterRGB<cl_algo::Kinect::GuidedFilterRGBConfig::SEPARATED>
+        kGFRGB.get (cl_algo::GF::Kinect::GuidedFilterRGB<cl_algo::GF::Kinect::GuidedFilterRGBConfig::SEPARATED>
             ::Memory::D_OUT_B) = cl::Buffer (context, CL_MEM_READ_WRITE, bufferSize);
-        kGFRGB.init (imgWidth, imgHeight, dRadius, dEps, cl_algo::Staging::I);
+        kGFRGB.init (imgWidth, imgHeight, dRadius, dEps, cl_algo::GF::Staging::I);
 
         // Set arguments for the kernel responsible for handling the filtered RGB frame
-        kernelRGBGL.setArg (0, kGFRGB.get (cl_algo::Kinect::GuidedFilterRGB<cl_algo
+        kernelRGBGL.setArg (0, kGFRGB.get (cl_algo::GF::Kinect::GuidedFilterRGB<cl_algo::GF
             ::Kinect::GuidedFilterRGBConfig::SEPARATED>::Memory::D_OUT_R));
-        kernelRGBGL.setArg (1, kGFRGB.get (cl_algo::Kinect::GuidedFilterRGB<cl_algo
+        kernelRGBGL.setArg (1, kGFRGB.get (cl_algo::GF::Kinect::GuidedFilterRGB<cl_algo::GF
             ::Kinect::GuidedFilterRGBConfig::SEPARATED>::Memory::D_OUT_G));
-        kernelRGBGL.setArg (2, kGFRGB.get (cl_algo::Kinect::GuidedFilterRGB<cl_algo
+        kernelRGBGL.setArg (2, kGFRGB.get (cl_algo::GF::Kinect::GuidedFilterRGB<cl_algo::GF
             ::Kinect::GuidedFilterRGBConfig::SEPARATED>::Memory::D_OUT_B));
         kernelRGBGL.setArg (3, buffersGL[0]);
         kernelRGBGL.setArg (4, cl::Local (3 * local[0] * sizeof (cl_float)));
@@ -175,14 +175,14 @@ public:
         // GuidedFilter and are being scaled back up after GuidedFilter and 
         // before building the point cloud. The actual scale of the data has 
         // a strong effect on the resulting point cloud.
-        kGFDepth.get (cl_algo::Kinect::GuidedFilterDepth::Memory::D_OUT) = 
+        kGFDepth.get (cl_algo::GF::Kinect::GuidedFilterDepth::Memory::D_OUT) = 
             cl::Buffer (context, CL_MEM_READ_WRITE, bufferSize);
-        kGFDepth.init (imgWidth, imgHeight, dRadius, dEps, dScaling, cl_algo::Staging::I);
+        kGFDepth.init (imgWidth, imgHeight, dRadius, dEps, dScaling, cl_algo::GF::Staging::I);
 
-        to3D.get (cl_algo::DepthTo3D::Memory::D_IN) = 
-            kGFDepth.get (cl_algo::Kinect::GuidedFilterDepth::Memory::D_OUT);
-        to3D.get (cl_algo::DepthTo3D::Memory::D_OUT) = buffersGL[1];
-        to3D.init (imgWidth, imgHeight, focalLength, 1 / dScaling, cl_algo::Staging::NONE);
+        to3D.get (cl_algo::GF::DepthTo3D::Memory::D_IN) = 
+            kGFDepth.get (cl_algo::GF::Kinect::GuidedFilterDepth::Memory::D_OUT);
+        to3D.get (cl_algo::GF::DepthTo3D::Memory::D_OUT) = buffersGL[1];
+        to3D.init (imgWidth, imgHeight, focalLength, 1 / dScaling, cl_algo::GF::Staging::NONE);
     }
 
     /*! \brief Processes RGB and Depth frames on the GPU.
@@ -194,9 +194,9 @@ public:
     void process (cl_uchar *rgb, cl_ushort *depth)
     {
         // Transfer data to device
-        kGFRGB.write (cl_algo::Kinect::GuidedFilterRGB<cl_algo
+        kGFRGB.write (cl_algo::GF::Kinect::GuidedFilterRGB<cl_algo::GF
             ::Kinect::GuidedFilterRGBConfig::SEPARATED>::Memory::D_IN, rgb);
-        kGFDepth.write (cl_algo::Kinect::GuidedFilterDepth::Memory::D_IN, depth);
+        kGFDepth.write (cl_algo::GF::Kinect::GuidedFilterDepth::Memory::D_IN, depth);
 
         glFinish ();  // Wait for OpenGL pending operations on buffers to finish
 
@@ -310,9 +310,9 @@ private:
     cl::Event event;
     std::vector<cl::Event> waitList;
     clutils::CLEnvInfo<2> info;
-    cl_algo::Kinect::GuidedFilterRGB<cl_algo::Kinect::GuidedFilterRGBConfig::SEPARATED> kGFRGB;
-    cl_algo::Kinect::GuidedFilterDepth kGFDepth;
-    cl_algo::DepthTo3D to3D;
+    cl_algo::GF::Kinect::GuidedFilterRGB<cl_algo::GF::Kinect::GuidedFilterRGBConfig::SEPARATED> kGFRGB;
+    cl_algo::GF::Kinect::GuidedFilterDepth kGFDepth;
+    cl_algo::GF::DepthTo3D to3D;
     unsigned int bufferSize;
     int normalizeRGB;
 

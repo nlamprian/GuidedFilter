@@ -4,7 +4,7 @@
  *           initialize the necessary buffers, set up the workspaces, 
  *           and run the kernels.
  *  \author Nick Lamprianidis
- *  \version 1.1
+ *  \version 1.1.1
  *  \date 2015
  *  \copyright The MIT License (MIT)
  *  \par
@@ -42,6 +42,8 @@
  *         provide interfaces for the handling of memory objects.
  */
 namespace cl_algo
+{
+namespace GF
 {
 
     /*! \brief Enumerates configurations for the `SeparateRGB` class.
@@ -898,10 +900,10 @@ namespace cl_algo
     };
 
 
-    /*! \brief Interface class for the `prefixSum` kernel.
-     *  \details `prefixSum` performs a scan operation on each row in an array. 
+    /*! \brief Interface class for the `Scan` kernel.
+     *  \details `Scan` performs a scan operation on each row in an array. 
      *           For more details, look at the kernel's documentation.
-     *  \note The `prefixSum` kernel is available in `kernels/prefixSum_kernels.cl`.
+     *  \note The `Scan` kernel is available in `kernels/scan_kernels.cl`.
      *  \note The class creates its own buffers. If you would like to provide 
      *        your own buffers, call `get` to get references to the placeholders 
      *        within the class and assign them to your buffers. You will have to 
@@ -910,7 +912,7 @@ namespace cl_algo
      *        the class and assign it to another kernel class instance further 
      *        down in your task pipeline.
      *  
-     *        The following input/output `OpenCL` memory objects are created by a `PrefixSum` instance:<br>
+     *        The following input/output `OpenCL` memory objects are created by a `Scan` instance:<br>
      *        | Name | Type | Placement | I/O | Use | Properties | Size |
      *        | ---  |:---: |   :---:   |:---:|:---:|   :---:    |:---: |
      *        | H_IN | Buffer | Host   | I | Staging     | CL_MEM_READ_WRITE | \f$width*height*sizeof\ (cl\_float)\f$ |
@@ -918,7 +920,7 @@ namespace cl_algo
      *        | D_IN | Buffer | Device | I | Processing  | CL_MEM_READ_ONLY  | \f$width*height*sizeof\ (cl\_float)\f$ |
      *        | D_OUT| Buffer | Device | O | Processing  | CL_MEM_READ_WRITE | \f$width*height*sizeof\ (cl\_float)\f$ |
      */
-    class PrefixSum
+    class Scan
     {
     public:
         /*! \brief Enumerates the memory objects handled by the class.
@@ -928,22 +930,22 @@ namespace cl_algo
          *  \param H_IN input staging buffer.
          *  \param H_OUT output staging buffer.
          *  \param D_IN input buffer.
-         *  \param D_OUT output buffer.
          *  \param D_SUMS buffer of partial group sums.
+         *  \param D_OUT output buffer.
          */
-        enum class Memory : uint8_t { H_IN, H_OUT, D_IN, D_OUT, D_SUMS };
+        enum class Memory : uint8_t { H_IN, H_OUT, D_IN, D_SUMS, D_OUT };
 
         /*! \brief Configures an OpenCL environment as specified by `_info`. */
-        PrefixSum (clutils::CLEnv &_env, clutils::CLEnvInfo<1> _info);
+        Scan (clutils::CLEnv &_env, clutils::CLEnvInfo<1> _info);
         /*! \brief Returns a reference to an internal memory object. */
-        cl::Memory& get (PrefixSum::Memory mem);
+        cl::Memory& get (Scan::Memory mem);
         /*! \brief Configures kernel execution parameters. */
         void init (unsigned int _width, unsigned int _height, float _scaling = 1.f, Staging _staging = Staging::IO);
         /*! \brief Performs a data transfer to a device buffer. */
-        void write (PrefixSum::Memory mem = PrefixSum::Memory::D_IN, void *ptr = nullptr, bool block = CL_FALSE, 
+        void write (Scan::Memory mem = Scan::Memory::D_IN, void *ptr = nullptr, bool block = CL_FALSE, 
                     const std::vector<cl::Event> *events = nullptr, cl::Event *event = nullptr);
         /*! \brief Performs a data transfer to a staging buffer. */
-        void* read (PrefixSum::Memory mem = PrefixSum::Memory::H_OUT, bool block = CL_TRUE, 
+        void* read (Scan::Memory mem = Scan::Memory::H_OUT, bool block = CL_TRUE, 
                     const std::vector<cl::Event> *events = nullptr, cl::Event *event = nullptr);
         /*! \brief Executes the necessary kernels. */
         void run (const std::vector<cl::Event> *events = nullptr, cl::Event *event = nullptr);
@@ -960,12 +962,12 @@ namespace cl_algo
         clutils::CLEnvInfo<1> info;
         cl::Context context;
         cl::CommandQueue queue;
-        cl::Kernel kernelScan, kernelSums;
-        cl::NDRange globalScan, localScan;
-        cl::NDRange globalSums, offsetSums;
+        cl::Kernel kernelScan, kernelSumsScan, kernelAddSums;
+        cl::NDRange globalScan, globalSumsScan, localScan;
+        cl::NDRange globalAddSums, localAddSums, offsetAddSums;
         Staging staging;
         size_t wgMultiple, wgXdim;
-        unsigned int width, height, bufferSize;
+        unsigned int width, height, bufferSize, bufferSumsSize;
         float scaling;
         cl::Buffer hBufferIn, hBufferOut;
         cl::Buffer dBufferIn, dBufferOut, dBufferSums;
@@ -983,15 +985,27 @@ namespace cl_algo
         {
             double pTime;
 
-            queue.enqueueNDRangeKernel (
-                kernelScan, cl::NullRange, globalScan, localScan, events, &timer.event ());
-            queue.flush (); timer.wait ();
-            pTime = timer.duration ();
-
-            if (wgXdim == 2)
+            if (wgXdim == 1)
             {
                 queue.enqueueNDRangeKernel (
-                    kernelSums, offsetSums, globalSums, cl::NullRange, events, &timer.event ());
+                    kernelScan, cl::NullRange, globalScan, localScan, events, &timer.event ());
+                queue.flush (); timer.wait ();
+                pTime = timer.duration ();
+            }
+            else
+            {
+                queue.enqueueNDRangeKernel (
+                    kernelScan, cl::NullRange, globalScan, localScan, events, &timer.event ());
+                queue.flush (); timer.wait ();
+                pTime = timer.duration ();
+
+                queue.enqueueNDRangeKernel (
+                    kernelSumsScan, cl::NullRange, globalSumsScan, localScan, nullptr, &timer.event ());
+                queue.flush (); timer.wait ();
+                pTime += timer.duration ();
+
+                queue.enqueueNDRangeKernel (
+                    kernelAddSums, offsetAddSums, globalAddSums, localAddSums, nullptr, &timer.event ());
                 queue.flush (); timer.wait ();
                 pTime += timer.duration ();
             }
@@ -1087,7 +1101,7 @@ namespace cl_algo
 
 
     /*! \brief Interface class for the `Summed Area Table` operation.
-     *  \note The class makes use of the `prefixSum` and `transpose` kernels.
+     *  \note The class makes use of the `scan` and `transpose` kernels.
      *  \note It first scans the rows, then transposes the array, and then 
      *        scans the columns. Lastly, there is the option to leave the array
      *        in the transposed configuration, or transpose it again.
@@ -1148,7 +1162,7 @@ namespace cl_algo
         clutils::CLEnvInfo<1> info;
         cl::Context context;
         cl::CommandQueue queue;
-        PrefixSum scanRows, scanColumns;
+        Scan scanRows, scanColumns;
         Transpose transpose1, transpose2;
         Staging staging;
         unsigned int width, height, bufferSize;
@@ -2038,6 +2052,7 @@ namespace cl_algo
 
     }
 
+}
 }
 
 #endif  // ALGORITHMS_HPP

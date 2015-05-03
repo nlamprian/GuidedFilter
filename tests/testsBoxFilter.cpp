@@ -5,7 +5,7 @@
  *        of the associated algorithms. They are used only for testing purposes, 
  *        and not for examining the performance of their GPU alternatives.
  *  \author Nick Lamprianidis
- *  \version 1.1
+ *  \version 1.1.1
  *  \date 2015
  *  \copyright The MIT License (MIT)
  *  \par
@@ -45,7 +45,7 @@
 
 
 // Kernel filenames
-const std::string kernel_filename_scan { "kernels/prefixSum_kernels.cl" };
+const std::string kernel_filename_scan { "kernels/scan_kernels.cl"      };
 const std::string kernel_filename_tr   { "kernels/transpose_kernels.cl" };
 const std::string kernel_filename_box  { "kernels/boxFilter_kernels.cl" };
 
@@ -58,10 +58,10 @@ extern std::function<float ()> rNum_R_1_255_E__6;
 bool profiling;  // Flag to enable profiling of the kernels
 
 
-/*! \brief Tests the **prefixSum** kernel.
- *  \details The operation is a prefix sum scan on the rows in an array.
+/*! \brief Tests the **scan** kernel.
+ *  \details The operation is a scan on the rows of an array.
  */
-TEST (BoxFilter, prefixSum)
+TEST (BoxFilter, scan)
 {
     try
     {
@@ -76,7 +76,7 @@ TEST (BoxFilter, prefixSum)
 
         // Configure kernel execution parameters
         clutils::CLEnvInfo<1> info (0, 0, 0, { 0 }, 0);
-        cl_algo::PrefixSum scan (clEnv, info);
+        cl_algo::GF::Scan scan (clEnv, info);
         scan.init (width, height);
 
         // Initialize data (writes on staging buffer directly)
@@ -85,7 +85,7 @@ TEST (BoxFilter, prefixSum)
 
         scan.write ();  // Copy data to device
 
-        scan.run ();  // Execute kernels (~ 0.036 ms)
+        scan.run ();  // Execute kernels (~ 69 us)
         
         // Check partial (group) sums
         // cl_float groupSums[bufferSize / width];
@@ -96,12 +96,12 @@ TEST (BoxFilter, prefixSum)
         cl_float *results = (cl_float *) scan.read ();  // Copy results to host
         // printBufferF ("Received:", results, width, height, 3);
 
-        // Produce reference prefix sum array
+        // Produce reference scan array
         cl_float refScan[width * height];
         cpuScan (scan.hPtrIn, refScan, width, height);
         // printBufferF ("Expected:", refScan, width, height, 3);
 
-        // Verify prefix sum output
+        // Verify scan output
         float eps = 42 * std::numeric_limits<float>::epsilon ();  // 5.00679e-06
         for (uint row = 0; row < height; ++row)
             for (uint col = 0; col < width; ++col)
@@ -129,7 +129,7 @@ TEST (BoxFilter, prefixSum)
                 pGPU[i] = scan.run (gTimer);
 
             // Benchmark
-            pGPU.print (pCPU, "PrefixSum");
+            pGPU.print (pCPU, "Scan");
         }
 
     }
@@ -161,7 +161,7 @@ TEST (BoxFilter, transpose)
 
         // Configure kernel execution parameters
         clutils::CLEnvInfo<1> info (0, 0, 0, { 0 }, 0);
-        cl_algo::Transpose transpose (clEnv, info);
+        cl_algo::GF::Transpose transpose (clEnv, info);
         transpose.init (width, height);
 
         // Initialize data (writes on staging buffer directly)
@@ -170,7 +170,7 @@ TEST (BoxFilter, transpose)
         
         transpose.write ();  // Copy data to device
 
-        transpose.run ();  // Execute kernels (0.023 ms)
+        transpose.run ();  // Execute kernels (23 us)
         
         cl_float *results = (cl_float *) transpose.read ();  // Copy results to host
         // printBufferF ("Received:", results, width, height, 3);
@@ -222,9 +222,8 @@ TEST (BoxFilter, transpose)
 
 
 /*! \brief Tests the construction of a Summed Area Table (**SAT**).
- *  \details The operations performed are a prefix sum scan on the rows 
- *           in an array, an array transposition, and then a prefix sum 
- *           scan on the columns of the array.
+ *  \details The operations performed are a scan on the rows of an array, 
+ *           an array transposition, and then a scan on the columns of the array.
  */
 TEST (BoxFilter, sat)
 {
@@ -243,7 +242,7 @@ TEST (BoxFilter, sat)
 
         // Configure kernel execution parameters
         clutils::CLEnvInfo<1> info (0, 0, 0, { 0 }, 0);
-        cl_algo::SAT sat (clEnv, info);
+        cl_algo::GF::SAT sat (clEnv, info);
         sat.init (width, height);
 
         // Initialize data (writes on staging buffer directly)
@@ -252,7 +251,7 @@ TEST (BoxFilter, sat)
 
         sat.write ();  // Copy data to device
 
-        sat.run ();  // Execute kernels (~ 0.085 ms)
+        sat.run ();  // Execute kernels (~ 85 us)
         
         cl_float *results = (cl_float *) sat.read ();  // Copy results to host
         // printBufferF ("Received:", results, height, width, 5);
@@ -329,7 +328,7 @@ TEST (BoxFilter, boxFilterSAT)
 
         // Configure kernel execution parameters
         clutils::CLEnvInfo<1> info (0, 0, 0, { 0 }, 0);
-        cl_algo::BoxFilterSAT box (clEnv, info);
+        cl_algo::GF::BoxFilterSAT box (clEnv, info);
         box.init (width, height, filterRadius);
 
         // Initialize data (writes on staging buffer directly)
@@ -338,7 +337,7 @@ TEST (BoxFilter, boxFilterSAT)
 
         box.write ();  // Copy data to device
 
-        box.run ();  // Execute kernels (~ 0.131 ms)
+        box.run ();  // Execute kernels (~ 131 us)
         
         cl_float *results = (cl_float *) box.read ();  // Copy results to host
         // printBufferF ("Received:", results, width, height, 5);
@@ -409,7 +408,7 @@ TEST (BoxFilter, boxFilter)
 
         // Configure kernel execution parameters
         clutils::CLEnvInfo<1> info (0, 0, 0, { 0 }, 0);
-        cl_algo::BoxFilter box (clEnv, info);
+        cl_algo::GF::BoxFilter box (clEnv, info);
         box.init (width, height, filterRadius);
 
         // Initialize data (writes on staging buffer directly)
@@ -418,7 +417,7 @@ TEST (BoxFilter, boxFilter)
 
         box.write ();  // Copy data to device
 
-        box.run ();  // Execute kernels (~ 0.249 ms)
+        box.run ();  // Execute kernels (~ 249 us)
         
         cl_float *results = (cl_float *) box.read ();  // Copy results to host
         // printBufferF ("Received:", results, width, height, 5);

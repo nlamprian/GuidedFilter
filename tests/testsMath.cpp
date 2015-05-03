@@ -5,7 +5,7 @@
  *        of the associated algorithms. They are used only for testing purposes, 
  *        and not for examining the performance of their GPU alternatives.
  *  \author Nick Lamprianidis
- *  \version 1.1
+ *  \version 1.1.1
  *  \date 2015
  *  \copyright The MIT License (MIT)
  *  \par
@@ -72,7 +72,7 @@ TEST (Math, mult)
 
         // Configure kernel execution parameters
         clutils::CLEnvInfo<1> info (0, 0, 0, { 0 }, 0);
-        cl_algo::Math::Mult mult (clEnv, info);
+        cl_algo::GF::Math::Mult mult (clEnv, info);
         mult.init (width, height);
 
         // Initialize data (writes on staging buffer directly)
@@ -82,10 +82,10 @@ TEST (Math, mult)
         // printBufferF ("Original B:", mult.hPtrInB, width, height, 0);
 
         // Copy data to device
-        mult.write (cl_algo::Math::Mult::Memory::D_IN_A);
-        mult.write (cl_algo::Math::Mult::Memory::D_IN_B);
+        mult.write (cl_algo::GF::Math::Mult::Memory::D_IN_A);
+        mult.write (cl_algo::GF::Math::Mult::Memory::D_IN_B);
 
-        mult.run ();  // Execute kernels (0.026 ms)
+        mult.run ();  // Execute kernels (26 us)
         
         cl_float *results = (cl_float *) mult.read ();  // Copy results to host
         // printBufferF ("Received:", results, width, height, 1);
@@ -156,7 +156,7 @@ TEST (Math, pown)
 
         // Configure kernel execution parameters
         clutils::CLEnvInfo<1> info (0, 0, 0, { 0 }, 0);
-        cl_algo::Math::Pown pown (clEnv, info);
+        cl_algo::GF::Math::Pown pown (clEnv, info);
         pown.init (width, height, power);
 
         // Initialize data (writes on staging buffer directly)
@@ -165,7 +165,7 @@ TEST (Math, pown)
 
         pown.write ();  // Copy data to device
 
-        pown.run ();  // Execute kernels (0.059 ms)
+        pown.run ();  // Execute kernels (59 us)
         
         cl_float *results = (cl_float *) pown.read ();  // Copy results to host
         // printBufferF ("Received:", results, width, height, 1);

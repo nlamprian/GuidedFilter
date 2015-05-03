@@ -6,7 +6,7 @@
  *           channels separately, and displays the original and filtered 
  *           images on the screen.
  *  \author Nick Lamprianidis
- *  \version 1.1
+ *  \version 1.1.1
  *  \date 2015
  *  \copyright The MIT License (MIT)
  *  \par
@@ -48,7 +48,7 @@
 
 // Kernel filenames
 const std::vector<std::string> kernel_files = { "kernels/imageSupport_kernels.cl", 
-                                                "kernels/prefixSum_kernels.cl", 
+                                                "kernels/scan_kernels.cl", 
                                                 "kernels/transpose_kernels.cl", 
                                                 "kernels/boxFilter_kernels.cl",
                                                 "kernels/math_kernels.cl", 
@@ -79,39 +79,39 @@ int main (int argc, char **argv)
 
         // Configure kernel execution parameters
         clutils::CLEnvInfo<1> infoRGB (0, 0, 0, { 0 }, 0);
-        const cl_algo::SeparateRGBConfig C1 = cl_algo::SeparateRGBConfig::UCHAR_FLOAT;
-        cl_algo::SeparateRGB<C1> rgb (clEnv, infoRGB);
-        rgb.get (cl_algo::SeparateRGB<C1>::Memory::D_OUT_R) = cl::Buffer (context, CL_MEM_READ_WRITE, bufferSize);
-        rgb.get (cl_algo::SeparateRGB<C1>::Memory::D_OUT_G) = cl::Buffer (context, CL_MEM_READ_WRITE, bufferSize);
-        rgb.get (cl_algo::SeparateRGB<C1>::Memory::D_OUT_B) = cl::Buffer (context, CL_MEM_READ_WRITE, bufferSize);
-        rgb.init (width, height, cl_algo::Staging::I);
+        const cl_algo::GF::SeparateRGBConfig C1 = cl_algo::GF::SeparateRGBConfig::UCHAR_FLOAT;
+        cl_algo::GF::SeparateRGB<C1> rgb (clEnv, infoRGB);
+        rgb.get (cl_algo::GF::SeparateRGB<C1>::Memory::D_OUT_R) = cl::Buffer (context, CL_MEM_READ_WRITE, bufferSize);
+        rgb.get (cl_algo::GF::SeparateRGB<C1>::Memory::D_OUT_G) = cl::Buffer (context, CL_MEM_READ_WRITE, bufferSize);
+        rgb.get (cl_algo::GF::SeparateRGB<C1>::Memory::D_OUT_B) = cl::Buffer (context, CL_MEM_READ_WRITE, bufferSize);
+        rgb.init (width, height, cl_algo::GF::Staging::I);
 
         clutils::CLEnvInfo<2> infoGF (0, 0, 0, { 0, 1 }, 0);
-        const cl_algo::GuidedFilterConfig Ip = cl_algo::GuidedFilterConfig::I_EQ_P;
-        cl_algo::GuidedFilter<Ip> gfR (clEnv, infoGF);
-        gfR.get (cl_algo::GuidedFilter<Ip>::Memory::D_IN) = rgb.get (cl_algo::SeparateRGB<C1>::Memory::D_OUT_R);
-        gfR.get (cl_algo::GuidedFilter<Ip>::Memory::D_OUT) = cl::Buffer (context, CL_MEM_READ_WRITE, bufferSize);
-        gfR.init (width, height, gfRadius, gfEps, 0, 0.0001f, cl_algo::Staging::NONE);
+        const cl_algo::GF::GuidedFilterConfig Ip = cl_algo::GF::GuidedFilterConfig::I_EQ_P;
+        cl_algo::GF::GuidedFilter<Ip> gfR (clEnv, infoGF);
+        gfR.get (cl_algo::GF::GuidedFilter<Ip>::Memory::D_IN) = rgb.get (cl_algo::GF::SeparateRGB<C1>::Memory::D_OUT_R);
+        gfR.get (cl_algo::GF::GuidedFilter<Ip>::Memory::D_OUT) = cl::Buffer (context, CL_MEM_READ_WRITE, bufferSize);
+        gfR.init (width, height, gfRadius, gfEps, 0, 0.0001f, cl_algo::GF::Staging::NONE);
 
-        cl_algo::GuidedFilter<Ip> gfG (clEnv, infoGF);
-        gfG.get (cl_algo::GuidedFilter<Ip>::Memory::D_IN) = rgb.get (cl_algo::SeparateRGB<C1>::Memory::D_OUT_G);
-        gfG.get (cl_algo::GuidedFilter<Ip>::Memory::D_OUT) = cl::Buffer (context, CL_MEM_READ_WRITE, bufferSize);
-        gfG.init (width, height, gfRadius, gfEps, 0, 0.0001f, cl_algo::Staging::NONE);
+        cl_algo::GF::GuidedFilter<Ip> gfG (clEnv, infoGF);
+        gfG.get (cl_algo::GF::GuidedFilter<Ip>::Memory::D_IN) = rgb.get (cl_algo::GF::SeparateRGB<C1>::Memory::D_OUT_G);
+        gfG.get (cl_algo::GF::GuidedFilter<Ip>::Memory::D_OUT) = cl::Buffer (context, CL_MEM_READ_WRITE, bufferSize);
+        gfG.init (width, height, gfRadius, gfEps, 0, 0.0001f, cl_algo::GF::Staging::NONE);
 
-        cl_algo::GuidedFilter<Ip> gfB (clEnv, infoGF);
-        gfB.get (cl_algo::GuidedFilter<Ip>::Memory::D_IN) = rgb.get (cl_algo::SeparateRGB<C1>::Memory::D_OUT_B);
-        gfB.get (cl_algo::GuidedFilter<Ip>::Memory::D_OUT) = cl::Buffer (context, CL_MEM_READ_WRITE, bufferSize);
-        gfB.init (width, height, gfRadius, gfEps, 0, 0.0001f, cl_algo::Staging::NONE);
+        cl_algo::GF::GuidedFilter<Ip> gfB (clEnv, infoGF);
+        gfB.get (cl_algo::GF::GuidedFilter<Ip>::Memory::D_IN) = rgb.get (cl_algo::GF::SeparateRGB<C1>::Memory::D_OUT_B);
+        gfB.get (cl_algo::GF::GuidedFilter<Ip>::Memory::D_OUT) = cl::Buffer (context, CL_MEM_READ_WRITE, bufferSize);
+        gfB.init (width, height, gfRadius, gfEps, 0, 0.0001f, cl_algo::GF::Staging::NONE);
 
-        const cl_algo::CombineRGBConfig C2 = cl_algo::CombineRGBConfig::FLOAT_FLOAT;
-        cl_algo::CombineRGB<C2> fRGB (clEnv, infoRGB);
-        fRGB.get (cl_algo::CombineRGB<C2>::Memory::D_IN_R) = gfR.get (cl_algo::GuidedFilter<Ip>::Memory::D_OUT);
-        fRGB.get (cl_algo::CombineRGB<C2>::Memory::D_IN_G) = gfG.get (cl_algo::GuidedFilter<Ip>::Memory::D_OUT);
-        fRGB.get (cl_algo::CombineRGB<C2>::Memory::D_IN_B) = gfB.get (cl_algo::GuidedFilter<Ip>::Memory::D_OUT);
-        fRGB.init (width, height, cl_algo::Staging::O);
+        const cl_algo::GF::CombineRGBConfig C2 = cl_algo::GF::CombineRGBConfig::FLOAT_FLOAT;
+        cl_algo::GF::CombineRGB<C2> fRGB (clEnv, infoRGB);
+        fRGB.get (cl_algo::GF::CombineRGB<C2>::Memory::D_IN_R) = gfR.get (cl_algo::GF::GuidedFilter<Ip>::Memory::D_OUT);
+        fRGB.get (cl_algo::GF::CombineRGB<C2>::Memory::D_IN_G) = gfG.get (cl_algo::GF::GuidedFilter<Ip>::Memory::D_OUT);
+        fRGB.get (cl_algo::GF::CombineRGB<C2>::Memory::D_IN_B) = gfB.get (cl_algo::GF::GuidedFilter<Ip>::Memory::D_OUT);
+        fRGB.init (width, height, cl_algo::GF::Staging::O);
 
         // Copy data to device
-        rgb.write (cl_algo::SeparateRGB<C1>::Memory::D_IN, image.datastart);
+        rgb.write (cl_algo::GF::SeparateRGB<C1>::Memory::D_IN, image.datastart);
 
         // Execute kernels
         cl::Event event;

@@ -1,12 +1,5 @@
 /*! \file guidedFilter_kernels.cl
  *  \brief Kernels for performing `Guided Image Filtering`.
- *  \note The kernels present in this file are developed with the goal of 
- *        maximum performance under the project's main application which is the 
- *        processing of 640x480 images on the Guided Image Filtering pipeline. 
- *        The algorithms themselves and their performance might not generalize 
- *        well under different environments. When possible, comments will be 
- *        made in the documentation of each kernel to try to highlight 
- *        the specific issues.
  *  \author Nick Lamprianidis
  *  \version 1.0
  *  \date 2015

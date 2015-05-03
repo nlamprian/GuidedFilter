@@ -5,7 +5,7 @@
  *        of the associated algorithms. They are used only for testing purposes, 
  *        and not for examining the performance of their GPU alternatives.
  *  \author Nick Lamprianidis
- *  \version 1.1
+ *  \version 1.1.1
  *  \date 2015
  *  \copyright The MIT License (MIT)
  *  \par
@@ -76,8 +76,8 @@ TEST (ImageSupport, separateRGBChannels_Float2Float)
         
         // Configure kernel execution parameters
         clutils::CLEnvInfo<1> info (0, 0, 0, { 0 }, 0);
-        const cl_algo::SeparateRGBConfig C = cl_algo::SeparateRGBConfig::FLOAT_FLOAT;
-        cl_algo::SeparateRGB<C> sRGB (clEnv, info);
+        const cl_algo::GF::SeparateRGBConfig C = cl_algo::GF::SeparateRGBConfig::FLOAT_FLOAT;
+        cl_algo::GF::SeparateRGB<C> sRGB (clEnv, info);
         sRGB.init (width, height);
 
         // Initialize data (writes on staging buffer directly)
@@ -86,12 +86,12 @@ TEST (ImageSupport, separateRGBChannels_Float2Float)
         
         sRGB.write ();  // Copy data to device
 
-        sRGB.run ();  // Execute kernels (0.074 ms)
+        sRGB.run ();  // Execute kernels (74 us)
         
         // Copy results to host
-        cl_float *R = (cl_float *) sRGB.read (cl_algo::SeparateRGB<C>::Memory::H_OUT_R, CL_FALSE);
-        cl_float *G = (cl_float *) sRGB.read (cl_algo::SeparateRGB<C>::Memory::H_OUT_G, CL_FALSE);
-        cl_float *B = (cl_float *) sRGB.read (cl_algo::SeparateRGB<C>::Memory::H_OUT_B);
+        cl_float *R = (cl_float *) sRGB.read (cl_algo::GF::SeparateRGB<C>::Memory::H_OUT_R, CL_FALSE);
+        cl_float *G = (cl_float *) sRGB.read (cl_algo::GF::SeparateRGB<C>::Memory::H_OUT_G, CL_FALSE);
+        cl_float *B = (cl_float *) sRGB.read (cl_algo::GF::SeparateRGB<C>::Memory::H_OUT_B);
         // printBufferF ("Received R:", R, width, height, 1);
         // printBufferF ("Received G:", G, width, height, 1);
         // printBufferF ("Received B:", B, width, height, 1);
@@ -169,8 +169,8 @@ TEST (ImageSupport, separateRGBChannels_Uchar2Float)
         
         // Configure kernel execution parameters
         clutils::CLEnvInfo<1> info (0, 0, 0, { 0 }, 0);
-        const cl_algo::SeparateRGBConfig C = cl_algo::SeparateRGBConfig::UCHAR_FLOAT;
-        cl_algo::SeparateRGB<C> sRGB (clEnv, info);
+        const cl_algo::GF::SeparateRGBConfig C = cl_algo::GF::SeparateRGBConfig::UCHAR_FLOAT;
+        cl_algo::GF::SeparateRGB<C> sRGB (clEnv, info);
         sRGB.init (width, height);
 
         // Initialize data (writes on staging buffer directly)
@@ -179,12 +179,12 @@ TEST (ImageSupport, separateRGBChannels_Uchar2Float)
         
         sRGB.write ();  // Copy data to device
 
-        sRGB.run ();  // Execute kernels (0.081 ms)
+        sRGB.run ();  // Execute kernels (81 us)
         
         // Copy results to host
-        cl_float *R = (cl_float *) sRGB.read (cl_algo::SeparateRGB<C>::Memory::H_OUT_R, CL_FALSE);
-        cl_float *G = (cl_float *) sRGB.read (cl_algo::SeparateRGB<C>::Memory::H_OUT_G, CL_FALSE);
-        cl_float *B = (cl_float *) sRGB.read (cl_algo::SeparateRGB<C>::Memory::H_OUT_B);
+        cl_float *R = (cl_float *) sRGB.read (cl_algo::GF::SeparateRGB<C>::Memory::H_OUT_R, CL_FALSE);
+        cl_float *G = (cl_float *) sRGB.read (cl_algo::GF::SeparateRGB<C>::Memory::H_OUT_G, CL_FALSE);
+        cl_float *B = (cl_float *) sRGB.read (cl_algo::GF::SeparateRGB<C>::Memory::H_OUT_B);
         // printBufferF ("Received R:", R, width, height, 1);
         // printBufferF ("Received G:", G, width, height, 1);
         // printBufferF ("Received B:", B, width, height, 1);
@@ -263,8 +263,8 @@ TEST (ImageSupport, combineRGBChannels_Float2Float)
 
         // Configure kernel execution parameters
         clutils::CLEnvInfo<1> info (0, 0, 0, { 0 }, 0);
-        const cl_algo::CombineRGBConfig C = cl_algo::CombineRGBConfig::FLOAT_FLOAT;
-        cl_algo::CombineRGB<C> cRGB (clEnv, info);
+        const cl_algo::GF::CombineRGBConfig C = cl_algo::GF::CombineRGBConfig::FLOAT_FLOAT;
+        cl_algo::GF::CombineRGB<C> cRGB (clEnv, info);
         cRGB.init (width, height);
 
         // Initialize data (writes on staging buffer directly)
@@ -276,11 +276,11 @@ TEST (ImageSupport, combineRGBChannels_Float2Float)
         // printBuffer ("Original B:", cRGB.hPtrInB, width, height);
         
         // Copy data to device
-        cRGB.write (cl_algo::CombineRGB<C>::Memory::D_IN_R);
-        cRGB.write (cl_algo::CombineRGB<C>::Memory::D_IN_G);
-        cRGB.write (cl_algo::CombineRGB<C>::Memory::D_IN_B);
+        cRGB.write (cl_algo::GF::CombineRGB<C>::Memory::D_IN_R);
+        cRGB.write (cl_algo::GF::CombineRGB<C>::Memory::D_IN_G);
+        cRGB.write (cl_algo::GF::CombineRGB<C>::Memory::D_IN_B);
 
-        cRGB.run ();  // Execute kernels (0.082 ms)
+        cRGB.run ();  // Execute kernels (82 us)
         
         cl_float *results = (cl_float *) cRGB.read ();  // Copy results to host
         // printBuffer ("Received:", results, 3, width * height);
@@ -354,8 +354,8 @@ TEST (ImageSupport, combineRGBChannels_Float2Uchar)
 
         // Configure kernel execution parameters
         clutils::CLEnvInfo<1> info (0, 0, 0, { 0 }, 0);
-        const cl_algo::CombineRGBConfig C = cl_algo::CombineRGBConfig::FLOAT_UCHAR;
-        cl_algo::CombineRGB<C> cRGB (clEnv, info);
+        const cl_algo::GF::CombineRGBConfig C = cl_algo::GF::CombineRGBConfig::FLOAT_UCHAR;
+        cl_algo::GF::CombineRGB<C> cRGB (clEnv, info);
         cRGB.init (width, height);
 
         // Initialize data (writes on staging buffer directly)
@@ -367,11 +367,11 @@ TEST (ImageSupport, combineRGBChannels_Float2Uchar)
         // printBufferF ("Original B:", cRGB.hPtrInB, width, height, 0);
         
         // Copy data to device
-        cRGB.write (cl_algo::CombineRGB<C>::Memory::D_IN_R);
-        cRGB.write (cl_algo::CombineRGB<C>::Memory::D_IN_G);
-        cRGB.write (cl_algo::CombineRGB<C>::Memory::D_IN_B);
+        cRGB.write (cl_algo::GF::CombineRGB<C>::Memory::D_IN_R);
+        cRGB.write (cl_algo::GF::CombineRGB<C>::Memory::D_IN_G);
+        cRGB.write (cl_algo::GF::CombineRGB<C>::Memory::D_IN_B);
 
-        cRGB.run ();  // Execute kernels (0.082 ms)
+        cRGB.run ();  // Execute kernels (82 us)
         
         cl_uchar *results = (cl_uchar *) cRGB.read ();  // Copy results to host
         // printBuffer ("Received:", results, 3, width * height);
@@ -444,7 +444,7 @@ TEST (ImageSupport, depth_Ushort2Float)
 
         // Configure kernel execution parameters
         clutils::CLEnvInfo<1> info (0, 0, 0, { 0 }, 0);
-        cl_algo::Depth<cl_algo::DepthConfig::USHORT_FLOAT> df (clEnv, info);
+        cl_algo::GF::Depth<cl_algo::GF::DepthConfig::USHORT_FLOAT> df (clEnv, info);
         df.init (width, height);
         
         // Initialize data (writes on staging buffer directly)
@@ -453,7 +453,7 @@ TEST (ImageSupport, depth_Ushort2Float)
         
         df.write ();  // Copy data to device
 
-        df.run ();  // Execute kernels (0.014 ms)
+        df.run ();  // Execute kernels (14 us)
         
         // Copy results to host
         cl_float *results = (cl_float *) df.read ();
@@ -526,7 +526,7 @@ TEST (ImageSupport, depthTo3D)
 
         // Configure kernel execution parameters
         clutils::CLEnvInfo<1> info (0, 0, 0, { 0 }, 0);
-        cl_algo::DepthTo3D d3 (clEnv, info);
+        cl_algo::GF::DepthTo3D d3 (clEnv, info);
         d3.init (width, height, f);
         
         // Initialize data (writes on staging buffer directly)
@@ -535,7 +535,7 @@ TEST (ImageSupport, depthTo3D)
         
         d3.write ();  // Copy data to device
 
-        d3.run ();  // Execute kernels (0.045 ms)
+        d3.run ();  // Execute kernels (45 us)
         
         // Copy results to host
         cl_float4 *results = (cl_float4 *) d3.read ();
@@ -613,7 +613,7 @@ TEST (ImageSupport, rgbNorm)
 
         // Configure kernel execution parameters
         clutils::CLEnvInfo<1> info (0, 0, 0, { 0 }, 0);
-        cl_algo::RGBNorm norm (clEnv, info);
+        cl_algo::GF::RGBNorm norm (clEnv, info);
         norm.init (width, height);
 
         // Initialize data (writes on staging buffer directly)
@@ -622,7 +622,7 @@ TEST (ImageSupport, rgbNorm)
         
         norm.write ();  // Copy data to device
 
-        norm.run ();  // Execute kernels (0.050 ms)
+        norm.run ();  // Execute kernels (50 us)
         
         cl_float *results = (cl_float *) norm.read ();  // Copy results to host
         // printBuffer ("Received:", results, 3, width * height);
@@ -703,7 +703,7 @@ TEST (ImageSupport, rgbdTo8D)
 
         // Configure kernel execution parameters
         clutils::CLEnvInfo<1> info (0, 0, 0, { 0 }, 0);
-        cl_algo::RGBDTo8D to8D (clEnv, info);
+        cl_algo::GF::RGBDTo8D to8D (clEnv, info);
         to8D.init (width, height, f);
 
         // Initialize data (writes on staging buffer directly)
@@ -717,12 +717,12 @@ TEST (ImageSupport, rgbdTo8D)
         // printBufferF ("Original B:", to8D.hPtrInB, width, height, 1);
         
         // Copy data to device
-        to8D.write (cl_algo::RGBDTo8D::Memory::D_IN_D);
-        to8D.write (cl_algo::RGBDTo8D::Memory::D_IN_R);
-        to8D.write (cl_algo::RGBDTo8D::Memory::D_IN_G);
-        to8D.write (cl_algo::RGBDTo8D::Memory::D_IN_B);
+        to8D.write (cl_algo::GF::RGBDTo8D::Memory::D_IN_D);
+        to8D.write (cl_algo::GF::RGBDTo8D::Memory::D_IN_R);
+        to8D.write (cl_algo::GF::RGBDTo8D::Memory::D_IN_G);
+        to8D.write (cl_algo::GF::RGBDTo8D::Memory::D_IN_B);
 
-        to8D.run ();  // Execute kernels (0.121 ms)
+        to8D.run ();  // Execute kernels (121 us)
         
         cl_float8 *results = (cl_float8 *) to8D.read ();  // Copy results to host
         // printBufferF ("Received:", (cl_float *) results, 8, points, 1);

@@ -1,7 +1,7 @@
 /*! \file common.hpp
  *  \brief Declares classes used by the OpenCL interface classes in `cl_algo`.
  *  \author Nick Lamprianidis
- *  \version 1.1
+ *  \version 1.1.1
  *  \date 2015
  *  \copyright The MIT License (MIT)
  *  \par
@@ -35,6 +35,8 @@
  */
 namespace cl_algo
 {
+namespace GF
+{
 
     /*! \brief Enumerates staging buffer configurations.
      *  \details It's meant to be used when making a call to the `init` 
@@ -48,6 +50,7 @@ namespace cl_algo
      */
     enum class Staging : uint8_t { NONE, I, O, IO };
 
+}
 }
 
 #endif  // COMMON_HPP

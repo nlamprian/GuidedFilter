@@ -1,7 +1,7 @@
 /*! \file helperFuncs.hpp
  *  \brief Declarations of helper functions for testing.
  *  \author Nick Lamprianidis
- *  \version 1.1
+ *  \version 1.1.1
  *  \date 2015
  *  \copyright The MIT License (MIT)
  *  \par
@@ -116,7 +116,7 @@ void printBufferF (const char *title, T *ptr, uint32_t width, uint32_t height, u
 
 
 /*! \brief Performs a matrix transposition.
- *  \details It represents just a naive serial implementation.
+ *  \details It is just a naive serial implementation.
  *
  *  \param[in] in input image.
  *  \param[out] out output (transpose) image.
@@ -133,7 +133,7 @@ void cpuTranspose (T1 *in, T2 *out, uint32_t width, uint32_t height)
 
 
 /*! \brief Performs a matrix transposition.
- *  \details It represents just a naive serial implementation.
+ *  \details It is just a naive serial implementation.
  *
  *  \param[in] in input image.
  *  \param[out] r output image with channel r.
@@ -154,7 +154,7 @@ void cpuSeparateRGB (T *in, T *r, T *g, T *b, uint32_t pixels)
 
 
 /*! \brief Performs a matrix transposition.
- *  \details It represents just a naive serial implementation.
+ *  \details It is just a naive serial implementation.
  *
  *  \param[in] in input image.
  *  \param[out] r output image with channel r.
@@ -175,7 +175,7 @@ void cpuSeparateRGB_N_Norm (unsigned char *in, T2 *r, T2 *g, T2 *b, uint32_t pix
 
 
 /*! \brief Performs a matrix transposition.
- *  \details It represents just a naive serial implementation.
+ *  \details It is just a naive serial implementation.
  *
  *  \param[in] r input image with channel r.
  *  \param[in] g input image with channel g.
@@ -196,7 +196,7 @@ void cpuCombineRGB (T *r, T *g, T *b, T *out, uint32_t pixels)
 
 
 /*! \brief Performs a matrix transpose.
- *  \details It represents just a naive serial implementation.
+ *  \details It is just a naive serial implementation.
  *
  *  \param[in] r input image with channel r.
  *  \param[in] g input image with channel g.
@@ -217,6 +217,7 @@ void cpuTranspose_N_Scale (T1 *r, T1 *g, T1 *b, unsigned char *out, uint32_t pix
 
 
 /*! \brief Transforms a depth image to a point cloud.
+ *  \details It is just a naive serial implementation.
  *
  *  \param[in] depth depth image (for Kinect, type: uint16, unit: mm).
  *  \param[out] pCloud point cloud.
@@ -241,6 +242,7 @@ void cpuDepthTo3D (T *depth, cl_float4 *pCloud, uint32_t width, uint32_t height,
 
 
 /*! \brief Fuses geometry and color values into 8D feature points.
+ *  \details It is just a naive serial implementation.
  *
  *  \param[in] D depth image.
  *  \param[in] R channel R of RGB image.
@@ -300,7 +302,8 @@ void cpuRGBNorm (T *in, T *out, uint32_t width, uint32_t height)
 }
 
 
-/*! \brief Performs a prefix sum scan.
+/*! \brief Performs a scan operation.
+ *  \details It is just a naive serial implementation.
  *
  *  \tparam T type of the data to be handled.
  *  \param[in] in input data.
@@ -322,6 +325,7 @@ void cpuScan (T *in, T *out, uint32_t width, uint32_t height)
 
 
 /*! \brief Constructs a Summed Area Table (SAT).
+ *  \details It is just a naive serial implementation.
  *
  *  \tparam T type of the data to be handled.
  *  \param[in] in input data.
@@ -347,6 +351,7 @@ void cpuSAT (T *in, T *out, uint32_t width, uint32_t height)
 
 
 /*! \brief Performs a blurring effect (mean filtering) on an array.
+ *  \details It is just a naive serial implementation.
  *
  *  \param[in] in input array.
  *  \param[out] out output (blurred) array.
@@ -387,6 +392,7 @@ void cpuBoxFilter (T *in, T *out, int width, int height, int radius)
 
 
 /*! \brief Performs an element-wise array multiplication.
+ *  \details It is just a naive serial implementation.
  *
  *  \param[in] a input array with the first operand.
  *  \param[in] b input array with the second operand.
@@ -398,15 +404,18 @@ template <typename T>
 void cpuMult (T *a, T *b, T *out, int width, int height)
 {
     for (int row = 0; row < height; ++row)
+    {
         for (int col = 0; col < width; ++col)
         {
             int idx = row * width + col;
             out[idx] = a[idx] * b[idx];
         }
+    }
 }
 
 
 /*! \brief Performs a raise to an integer power.
+ *  \details It is just a naive serial implementation.
  *
  *  \param[in] in input array.
  *  \param[out] out output array.
@@ -418,15 +427,18 @@ template <typename T>
 void cpuPown (T *in, T *out, int width, int height, int n)
 {
     for (int row = 0; row < height; ++row)
+    {
         for (int col = 0; col < width; ++col)
         {
             int idx = row * width + col;
             out[idx] = pow (in[idx], n);
         }
+    }
 }
 
 
 /*! \brief Performs edge preserving smoothing on an array.
+ *  \details It is just a naive serial implementation.
  *
  *  \param[in] p input array.
  *  \param[out] q output (smoothed) array.

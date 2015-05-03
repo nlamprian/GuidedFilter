@@ -5,7 +5,7 @@
  *           algorithm on a live video stream. It processes the Kinect RGB  
  *           stream in OpenCL with the `GuidedFilter` pipeline.
  *  \author Nick Lamprianidis
- *  \version 1.1
+ *  \version 1.1.1
  *  \date 2015
  *  \copyright The MIT License (MIT)
  *  \par
@@ -66,7 +66,7 @@ double freenectAngle = 0;
 
 // OpenCL
 const std::vector<std::string> kernel_files = { "kernels/imageSupport_kernels.cl", 
-                                                "kernels/prefixSum_kernels.cl", 
+                                                "kernels/scan_kernels.cl", 
                                                 "kernels/transpose_kernels.cl", 
                                                 "kernels/boxFilter_kernels.cl",
                                                 "kernels/math_kernels.cl", 
@@ -145,24 +145,24 @@ public:
         local = cl::NDRange (3 * wgM);
 
         // Initialize the Guided Image Filtering pipeline
-        kGFRGB.get (cl_algo::Kinect::GuidedFilterRGB<cl_algo::Kinect::GuidedFilterRGBConfig::SEPARATED>
+        kGFRGB.get (cl_algo::GF::Kinect::GuidedFilterRGB<cl_algo::GF::Kinect::GuidedFilterRGBConfig::SEPARATED>
             ::Memory::D_OUT_R) = cl::Buffer (context, CL_MEM_READ_WRITE, bufferSize);
-        kGFRGB.get (cl_algo::Kinect::GuidedFilterRGB<cl_algo::Kinect::GuidedFilterRGBConfig::SEPARATED>
+        kGFRGB.get (cl_algo::GF::Kinect::GuidedFilterRGB<cl_algo::GF::Kinect::GuidedFilterRGBConfig::SEPARATED>
             ::Memory::D_OUT_G) = cl::Buffer (context, CL_MEM_READ_WRITE, bufferSize);
-        kGFRGB.get (cl_algo::Kinect::GuidedFilterRGB<cl_algo::Kinect::GuidedFilterRGBConfig::SEPARATED>
+        kGFRGB.get (cl_algo::GF::Kinect::GuidedFilterRGB<cl_algo::GF::Kinect::GuidedFilterRGBConfig::SEPARATED>
             ::Memory::D_OUT_B) = cl::Buffer (context, CL_MEM_READ_WRITE, bufferSize);
-        kGFRGB.init (imgWidth, imgHeight, dRadius, dEps, cl_algo::Staging::I);
+        kGFRGB.init (imgWidth, imgHeight, dRadius, dEps, cl_algo::GF::Staging::I);
 
         // Create GL-shared images
         imagesGL.emplace_back (context, CL_MEM_WRITE_ONLY, GL_TEXTURE_2D, 0, glRGBTex);
         imagesGL.emplace_back (context, CL_MEM_WRITE_ONLY, GL_TEXTURE_2D, 0, glRGBTexFilt);
 
         // Set arguments for the kernel instance responsible for handling the original frame
-        kernelGLIn.setArg (0, kGFRGB.get (cl_algo::Kinect::GuidedFilterRGB<cl_algo
+        kernelGLIn.setArg (0, kGFRGB.get (cl_algo::GF::Kinect::GuidedFilterRGB<cl_algo::GF
             ::Kinect::GuidedFilterRGBConfig::SEPARATED>::Memory::D_INTR_R));
-        kernelGLIn.setArg (1, kGFRGB.get (cl_algo::Kinect::GuidedFilterRGB<cl_algo
+        kernelGLIn.setArg (1, kGFRGB.get (cl_algo::GF::Kinect::GuidedFilterRGB<cl_algo::GF
             ::Kinect::GuidedFilterRGBConfig::SEPARATED>::Memory::D_INTR_G));
-        kernelGLIn.setArg (2, kGFRGB.get (cl_algo::Kinect::GuidedFilterRGB<cl_algo
+        kernelGLIn.setArg (2, kGFRGB.get (cl_algo::GF::Kinect::GuidedFilterRGB<cl_algo::GF
             ::Kinect::GuidedFilterRGBConfig::SEPARATED>::Memory::D_INTR_B));
         kernelGLIn.setArg (3, imagesGL[0]);
         kernelGLIn.setArg (4, cl::Local (3 * local[0] * sizeof (cl_float)));
@@ -170,11 +170,11 @@ public:
         kernelGLIn.setArg (6, normalizeRGB);
 
         // Set arguments for the kernel instance responsible for handling the processed frame
-        kernelGLOut.setArg (0, kGFRGB.get (cl_algo::Kinect::GuidedFilterRGB<cl_algo
+        kernelGLOut.setArg (0, kGFRGB.get (cl_algo::GF::Kinect::GuidedFilterRGB<cl_algo::GF
             ::Kinect::GuidedFilterRGBConfig::SEPARATED>::Memory::D_OUT_R));
-        kernelGLOut.setArg (1, kGFRGB.get (cl_algo::Kinect::GuidedFilterRGB<cl_algo
+        kernelGLOut.setArg (1, kGFRGB.get (cl_algo::GF::Kinect::GuidedFilterRGB<cl_algo::GF
             ::Kinect::GuidedFilterRGBConfig::SEPARATED>::Memory::D_OUT_G));
-        kernelGLOut.setArg (2, kGFRGB.get (cl_algo::Kinect::GuidedFilterRGB<cl_algo
+        kernelGLOut.setArg (2, kGFRGB.get (cl_algo::GF::Kinect::GuidedFilterRGB<cl_algo::GF
             ::Kinect::GuidedFilterRGBConfig::SEPARATED>::Memory::D_OUT_B));
         kernelGLOut.setArg (3, imagesGL[1]);
         kernelGLOut.setArg (4, cl::Local (3 * local[0] * sizeof (cl_float)));
@@ -190,7 +190,7 @@ public:
     void process (cl_uchar *rgb)
     {
         // Transfer data to device
-        kGFRGB.write (cl_algo::Kinect::GuidedFilterRGB<cl_algo
+        kGFRGB.write (cl_algo::GF::Kinect::GuidedFilterRGB<cl_algo::GF
             ::Kinect::GuidedFilterRGBConfig::SEPARATED>::Memory::D_IN, rgb);
 
         glFinish ();  // Wait for OpenGL pending operations on buffers to finish
@@ -270,7 +270,7 @@ private:
     cl::Event gfEvent, glEventIn;
     std::vector<cl::Event> waitListGLIn, waitListGLObj;
     clutils::CLEnvInfo<2> info;
-    cl_algo::Kinect::GuidedFilterRGB<cl_algo::Kinect::GuidedFilterRGBConfig::SEPARATED> kGFRGB;
+    cl_algo::GF::Kinect::GuidedFilterRGB<cl_algo::GF::Kinect::GuidedFilterRGBConfig::SEPARATED> kGFRGB;
     unsigned int bufferSize;
     int normalizeRGB;
 

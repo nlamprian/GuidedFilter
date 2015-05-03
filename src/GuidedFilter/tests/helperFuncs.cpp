@@ -1,7 +1,7 @@
 /*! \file helperFuncs.cpp
  *  \brief Helper functions for testing.
  *  \author Nick Lamprianidis
- *  \version 1.1
+ *  \version 1.1.1
  *  \date 2015
  *  \copyright The MIT License (MIT)
  *  \par
@@ -51,7 +51,7 @@ std::function<unsigned char ()> rNum_0_255 = std::bind (distribution1, generator
 std::function<unsigned short ()> rNum_0_10000 = std::bind (distribution2, generator);
 /*! \brief Uniform number generator in the range \f$[0.0, 1.0)\f$. */
 std::function<float ()> rNum_R_0_1 = std::bind (distributionR1, generator);
-/*! \brief Uniform number generator in the range \f$[0.0, 1.0)\f$. */
+/*! \brief Uniform number generator in the range \f$[1e-6, 255*1e-6)\f$. */
 std::function<float ()> rNum_R_1_255_E__6 = std::bind (distributionR2, generator);
 
 

@@ -4,7 +4,7 @@
  *           initialize the necessary buffers, set up the workspaces, and 
  *           run the kernels.
  *  \author Nick Lamprianidis
- *  \version 1.1
+ *  \version 1.1.1
  *  \date 2015
  *  \copyright The MIT License (MIT)
  *  \par
@@ -44,6 +44,8 @@
  *        you can check the [online documentation](http://clutils.paign10.me/).
  */
 namespace cl_algo
+{
+namespace GF
 {
 
     /*! \param[in] _env opencl environment.
@@ -1922,12 +1924,13 @@ namespace cl_algo
     /*! \param[in] _env opencl environment.
      *  \param[in] _info opencl configuration. Specifies the context, queue, etc, to be used.
      */
-    PrefixSum::PrefixSum (clutils::CLEnv &_env, clutils::CLEnvInfo<1> _info) : 
+    Scan::Scan (clutils::CLEnv &_env, clutils::CLEnvInfo<1> _info) : 
         env (_env), info (_info), 
         context (env.getContext (info.pIdx)), 
         queue (env.getQueue (info.ctxIdx, info.qIdx[0])), 
-        kernelScan (env.getProgram (info.pgIdx), "prefixSum"), 
-        kernelSums (env.getProgram (info.pgIdx), "addPartialSums")
+        kernelScan (env.getProgram (info.pgIdx), "scan"), 
+        kernelSumsScan (env.getProgram (info.pgIdx), "scan"), 
+        kernelAddSums (env.getProgram (info.pgIdx), "addGroupSums")
     {
         wgMultiple = kernelScan.getWorkGroupInfo
             <CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE> (env.devices[info.pIdx][info.dIdx]);
@@ -1939,20 +1942,20 @@ namespace cl_algo
      *  \param[in] mem enumeration value specifying the requested memory object.
      *  \return A reference to the requested memory object.
      */
-    cl::Memory& PrefixSum::get (PrefixSum::Memory mem)
+    cl::Memory& Scan::get (Scan::Memory mem)
     {
         switch (mem)
         {
-            case PrefixSum::Memory::H_IN:
+            case Scan::Memory::H_IN:
                 return hBufferIn;
-            case PrefixSum::Memory::H_OUT:
+            case Scan::Memory::H_OUT:
                 return hBufferOut;
-            case PrefixSum::Memory::D_IN:
+            case Scan::Memory::D_IN:
                 return dBufferIn;
-            case PrefixSum::Memory::D_OUT:
-                return dBufferOut;
-            case PrefixSum::Memory::D_SUMS:
+            case Scan::Memory::D_SUMS:
                 return dBufferSums;
+            case Scan::Memory::D_OUT:
+                return dBufferOut;
         }
     }
 
@@ -1964,50 +1967,55 @@ namespace cl_algo
      *  \note Working with `float` elements and having large summations can be problematic.
      *        It is advised that a scaling is applied on the elements for better accuracy.
      *        
-     *  \param[in] _width width of the array to be processed.
-     *  \param[in] _height height of the array to be processed.
+     *  \param[in] _width width of the input array.
+     *  \param[in] _height height of the input array.
      *  \param[in] _scaling factor by which to scale the array elements before processing.
      *  \param[in] _staging flag to indicate whether or not to instantiate the staging buffers.
      */
-    void PrefixSum::init (unsigned int _width, unsigned int _height, float _scaling, Staging _staging)
+    void Scan::init (unsigned int _width, unsigned int _height, float _scaling, Staging _staging)
     {
         width = _width; height = _height;
         bufferSize = width * height * sizeof (cl_float);
         scaling = _scaling;
         staging = _staging;
 
+        // Establish the number of work-groups per row
+        wgXdim = ceil (width / (float) (8 * wgMultiple));
+        // Round up to a multiple of 4 (data are handled as int4)
+        if ((wgXdim != 1) && (wgXdim % 4)) wgXdim += 4 - wgXdim % 4;
+
+        bufferSumsSize = wgXdim * height * sizeof (cl_float);
+
         try
         {
-            // Number of work-groups that will be needed in the x
-            // dimension of the global workspace must be 1 or 2
-            //* 8 elements in a row are processed by each work-item
-            wgXdim = ceil (width / (float) (8 * wgMultiple));
-
             if (wgXdim == 0)
-                throw "The array cannot have zero width";
-            
-            if (wgXdim > 2)
+                throw "The array cannot have zero columns";
+
+            if (width % 4 != 0)
+                throw "The number of columns in the array must be a multiple of 4";
+
+            // (8 * wgMultiple) elements per work-group
+            if (width > std::pow (8 * wgMultiple, 2))
             {
                 std::ostringstream ss;
-                ss << "The maximum width for a buffer processed by prefixSum ";
-                ss << "on this device is " << 2 * 8 * wgMultiple;
+                ss << "The current configuration of Scan supports arrays ";
+                ss << "of up to " << std::pow (8 * wgMultiple, 2) << " columns";
                 throw ss.str ().c_str ();
             }
-
-            if (width % 8 != 0)
-                throw "The number of elements in a row of the array must be a multiple of 8";
         }
         catch (const char *error)
         {
-            std::cerr << "Error[PrefixSum]: " << error << std::endl;
+            std::cerr << "Error[Scan]: " << error << std::endl;
             exit (EXIT_FAILURE);
         }
 
         // Set workspaces
         globalScan = cl::NDRange (wgXdim * wgMultiple, height);
         localScan = cl::NDRange (wgMultiple, 1);
-        globalSums = cl::NDRange (2 * localScan[0], height);
-        offsetSums = cl::NDRange (2 * localScan[0], 0);
+        globalSumsScan = cl::NDRange (wgMultiple, height);
+        globalAddSums = cl::NDRange (2 * (wgXdim - 1) * wgMultiple, height);
+        localAddSums = cl::NDRange (2 * wgMultiple, 1);
+        offsetAddSums = cl::NDRange (2 * wgMultiple, 0);
 
         // Create staging buffers
         bool io = false;
@@ -2052,21 +2060,41 @@ namespace cl_algo
         // Create device buffers
         if (dBufferIn () == nullptr)
             dBufferIn = cl::Buffer (context, CL_MEM_READ_ONLY, bufferSize);
+        if (dBufferSums () == nullptr)
+            dBufferSums = cl::Buffer (context, CL_MEM_READ_WRITE, bufferSumsSize);
         if (dBufferOut () == nullptr)
             dBufferOut = cl::Buffer (context, CL_MEM_READ_WRITE, bufferSize);
-        if (dBufferSums () == nullptr)
-            dBufferSums = cl::Buffer (context, CL_MEM_READ_WRITE, bufferSize / width);
 
         // Set kernel arguments
-        kernelScan.setArg (0, dBufferIn);
-        kernelScan.setArg (1, dBufferOut);
-        kernelScan.setArg (2, cl::Local (2 * localScan[0] * sizeof (cl_float)));
-        kernelScan.setArg (3, dBufferSums);
-        kernelScan.setArg (4, width / 4);
-        kernelScan.setArg (5, scaling);
-        kernelSums.setArg (0, dBufferSums);
-        kernelSums.setArg (1, dBufferOut);
-        kernelSums.setArg (2, width / 4);
+        if (wgXdim == 1)
+        {
+            kernelScan.setArg (0, dBufferIn);
+            kernelScan.setArg (1, dBufferOut);
+            kernelScan.setArg (2, cl::Local (2 * localScan[0] * sizeof (cl_float)));
+            kernelScan.setArg (3, dBufferSums);  // Unused
+            kernelScan.setArg (4, width / 4);
+            kernelScan.setArg (5, scaling);
+        }
+        else
+        {
+            kernelScan.setArg (0, dBufferIn);
+            kernelScan.setArg (1, dBufferOut);
+            kernelScan.setArg (2, cl::Local (2 * localScan[0] * sizeof (cl_float)));
+            kernelScan.setArg (3, dBufferSums);
+            kernelScan.setArg (4, width / 4);
+            kernelScan.setArg (5, scaling);
+
+            kernelSumsScan.setArg (0, dBufferSums);
+            kernelSumsScan.setArg (1, dBufferSums);
+            kernelSumsScan.setArg (2, cl::Local (2 * localScan[0] * sizeof (cl_float)));
+            kernelSumsScan.setArg (3, dBufferSums);  // Unused
+            kernelSumsScan.setArg (4, (cl_uint) (wgXdim / 4));
+            kernelSumsScan.setArg (5, 1.f);
+
+            kernelAddSums.setArg (0, dBufferSums);
+            kernelAddSums.setArg (1, dBufferOut);
+            kernelAddSums.setArg (2, width / 4);
+        }
     }
 
 
@@ -2081,14 +2109,14 @@ namespace cl_algo
      *  \param[in] events a wait-list of events.
      *  \param[out] event event associated with the write operation to the device buffer.
      */
-    void PrefixSum::write (PrefixSum::Memory mem, void *ptr, bool block, 
-                           const std::vector<cl::Event> *events, cl::Event *event)
+    void Scan::write (Scan::Memory mem, void *ptr, bool block, 
+                      const std::vector<cl::Event> *events, cl::Event *event)
     {
         if (staging == Staging::I || staging == Staging::IO)
         {
             switch (mem)
             {
-                case PrefixSum::Memory::D_IN:
+                case Scan::Memory::D_IN:
                     if (ptr != nullptr)
                         std::copy ((cl_float *) ptr, (cl_float *) ptr + width * height, hPtrIn);
                     queue.enqueueWriteBuffer (dBufferIn, block, 0, bufferSize, hPtrIn, events, event);
@@ -2109,14 +2137,14 @@ namespace cl_algo
      *  \param[in] events a wait-list of events.
      *  \param[out] event event associated with the read operation to the staging buffer.
      */
-    void* PrefixSum::read (PrefixSum::Memory mem, bool block, 
-                           const std::vector<cl::Event> *events, cl::Event *event)
+    void* Scan::read (Scan::Memory mem, bool block, 
+                      const std::vector<cl::Event> *events, cl::Event *event)
     {
         if (staging == Staging::O || staging == Staging::IO)
         {
             switch (mem)
             {
-                case PrefixSum::Memory::H_OUT:
+                case Scan::Memory::H_OUT:
                     queue.enqueueReadBuffer (dBufferOut, block, 0, bufferSize, hPtrOut, events, event);
                     return hPtrOut;
                 default:
@@ -2132,20 +2160,30 @@ namespace cl_algo
      *  \param[in] events a wait-list of events.
      *  \param[out] event event associated with the last kernel execution.
      */
-    void PrefixSum::run (const std::vector<cl::Event> *events, cl::Event *event)
+    void Scan::run (const std::vector<cl::Event> *events, cl::Event *event)
     {
-        queue.enqueueNDRangeKernel (
-            kernelScan, cl::NullRange, globalScan, localScan, events, nullptr);
-
-        if (wgXdim == 2)
+        if (wgXdim == 1)
+        {
             queue.enqueueNDRangeKernel (
-                kernelSums, offsetSums, globalSums, cl::NullRange, events, event);
+                kernelScan, cl::NullRange, globalScan, localScan, events, event);
+        }
+        else
+        {
+            queue.enqueueNDRangeKernel (
+                kernelScan, cl::NullRange, globalScan, localScan, events);
+
+            queue.enqueueNDRangeKernel (
+                kernelSumsScan, cl::NullRange, globalSumsScan, localScan);
+
+            queue.enqueueNDRangeKernel (
+                kernelAddSums, offsetAddSums, globalAddSums, localAddSums, nullptr, event);
+        }
     }
 
 
     /*! \return The scaling factor.
      */
-    float PrefixSum::getScaling ()
+    float Scan::getScaling ()
     {
         return scaling;
     }
@@ -2155,7 +2193,7 @@ namespace cl_algo
      *
      *  \param[in] _scaling scaling factor.
      */
-    void PrefixSum::setScaling (float _scaling)
+    void Scan::setScaling (float _scaling)
     {
         scaling = _scaling;
         kernelScan.setArg (5, scaling);
@@ -2382,8 +2420,8 @@ namespace cl_algo
         env (_env), info (_info), 
         context (env.getContext (info.pIdx)), 
         queue (env.getQueue (info.ctxIdx, info.qIdx[0])), 
-        scanRows    (PrefixSum (env, info)), transpose1 (Transpose (env, info)),
-        scanColumns (PrefixSum (env, info)), transpose2 (Transpose (env, info)), 
+        scanRows    (Scan (env, info)), transpose1 (Transpose (env, info)),
+        scanColumns (Scan (env, info)), transpose2 (Transpose (env, info)), 
         transposed (_transposed)
     {
     }
@@ -2403,9 +2441,9 @@ namespace cl_algo
             case SAT::Memory::H_OUT:
                 return hBufferOut;
             case SAT::Memory::D_IN:
-                return scanRows.get (PrefixSum::Memory::D_IN);
+                return scanRows.get (Scan::Memory::D_IN);
             case SAT::Memory::D_OUT:
-                if (transposed) return scanColumns.get (PrefixSum::Memory::D_OUT);
+                if (transposed) return scanColumns.get (Scan::Memory::D_OUT);
                 else return transpose2.get (Transpose::Memory::D_OUT);
         }
     }
@@ -2483,16 +2521,16 @@ namespace cl_algo
 
         scanRows.init (width, height, scaling, Staging::NONE);
 
-        transpose1.get (Transpose::Memory::D_IN) = scanRows.get (PrefixSum::Memory::D_OUT);
+        transpose1.get (Transpose::Memory::D_IN) = scanRows.get (Scan::Memory::D_OUT);
         transpose1.get (Transpose::Memory::D_OUT) = cl::Buffer (context, CL_MEM_READ_WRITE, bufferSize);
         transpose1.init (width, height, Staging::NONE);
 
-        scanColumns.get (PrefixSum::Memory::D_IN) = transpose1.get (Transpose::Memory::D_OUT);
+        scanColumns.get (Scan::Memory::D_IN) = transpose1.get (Transpose::Memory::D_OUT);
         scanColumns.init (height, width, 1.f, Staging::NONE);
 
         if (!transposed)
         {
-            transpose2.get (Transpose::Memory::D_IN) = scanColumns.get (PrefixSum::Memory::D_OUT);
+            transpose2.get (Transpose::Memory::D_IN) = scanColumns.get (Scan::Memory::D_OUT);
             transpose2.init (height, width, Staging::NONE);
         }
     }
@@ -2519,7 +2557,7 @@ namespace cl_algo
                 case SAT::Memory::D_IN:
                     if (ptr != nullptr)
                         std::copy ((cl_float *) ptr, (cl_float *) ptr + width * height, hPtrIn);
-                    queue.enqueueWriteBuffer ((cl::Buffer&) scanRows.get (PrefixSum::Memory::D_IN), 
+                    queue.enqueueWriteBuffer ((cl::Buffer&) scanRows.get (Scan::Memory::D_IN), 
                         block, 0, bufferSize, hPtrIn, events, event);
                     break;
                 default:
@@ -2547,7 +2585,7 @@ namespace cl_algo
             {
                 case SAT::Memory::H_OUT:
                     if (transposed)
-                        queue.enqueueReadBuffer ((cl::Buffer&) scanColumns.get (PrefixSum::Memory::D_OUT), 
+                        queue.enqueueReadBuffer ((cl::Buffer&) scanColumns.get (Scan::Memory::D_OUT), 
                             block, 0, bufferSize, hPtrOut, events, event);
                     else
                         queue.enqueueReadBuffer ((cl::Buffer&) transpose2.get (Transpose::Memory::D_OUT), 
@@ -4664,4 +4702,5 @@ namespace cl_algo
 
     }
 
+}
 }

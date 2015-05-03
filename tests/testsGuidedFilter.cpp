@@ -5,7 +5,7 @@
  *        of the associated algorithms. They are used only for testing purposes, 
  *        and not for examining the performance of their GPU alternatives.
  *  \author Nick Lamprianidis
- *  \version 1.1
+ *  \version 1.1.1
  *  \date 2015
  *  \copyright The MIT License (MIT)
  *  \par
@@ -46,10 +46,10 @@
 
 // Kernel filenames
 const std::string kernel_filename_img  { "kernels/imageSupport_kernels.cl" };
-const std::string kernel_filename_scan { "kernels/prefixSum_kernels.cl" };
-const std::string kernel_filename_tr   { "kernels/transpose_kernels.cl" };
-const std::string kernel_filename_box  { "kernels/boxFilter_kernels.cl" };
-const std::string kernel_filename_math { "kernels/math_kernels.cl" };
+const std::string kernel_filename_scan { "kernels/scan_kernels.cl"         };
+const std::string kernel_filename_tr   { "kernels/transpose_kernels.cl"    };
+const std::string kernel_filename_box  { "kernels/boxFilter_kernels.cl"    };
+const std::string kernel_filename_math { "kernels/math_kernels.cl"         };
 const std::string kernel_filename_gf   { "kernels/guidedFilter_kernels.cl" };
 
 // Uniform random number generators
@@ -86,7 +86,7 @@ TEST (GuidedFilter, guidedFilter)
 
         // Configure kernel execution parameters
         clutils::CLEnvInfo<2> info (0, 0, 0, { 0, 1 }, 0);
-        cl_algo::GuidedFilter<cl_algo::GuidedFilterConfig::I_EQ_P> gf (clEnv, info);
+        cl_algo::GF::GuidedFilter<cl_algo::GF::GuidedFilterConfig::I_EQ_P> gf (clEnv, info);
         gf.init (width, height, gfRadius, gfEps);
 
         // Initialize data (writes on staging buffer directly)
@@ -175,8 +175,8 @@ TEST (GuidedFilter, guidedFilterIp)
 
         // Configure kernel execution parameters
         clutils::CLEnvInfo<2> info (0, 0, 0, { 0, 1 }, 0);
-        const cl_algo::GuidedFilterConfig Ip = cl_algo::GuidedFilterConfig::I_NEQ_P;
-        cl_algo::GuidedFilter<Ip> gf (clEnv, info);
+        const cl_algo::GF::GuidedFilterConfig Ip = cl_algo::GF::GuidedFilterConfig::I_NEQ_P;
+        cl_algo::GF::GuidedFilter<Ip> gf (clEnv, info);
         gf.init (width, height, gfRadius, gfEps);
 
         // Initialize data (writes on staging buffer directly)
@@ -186,8 +186,8 @@ TEST (GuidedFilter, guidedFilterIp)
         // printBufferF ("Original p:", gf.hPtrInP, width, height, 3);
 
         // Copy data to device
-        gf.write (cl_algo::GuidedFilter<Ip>::Memory::D_IN_I);
-        gf.write (cl_algo::GuidedFilter<Ip>::Memory::D_IN_P);
+        gf.write (cl_algo::GF::GuidedFilter<Ip>::Memory::D_IN_I);
+        gf.write (cl_algo::GF::GuidedFilter<Ip>::Memory::D_IN_P);
 
         gf.run ();  // Execute kernels (~ 1.120 ms)
         
