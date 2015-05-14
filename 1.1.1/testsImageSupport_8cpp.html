@@ -128,16 +128,16 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <code>#include &lt;gtest/gtest.h&gt;</code><br />
 <code>#include &lt;CLUtils.hpp&gt;</code><br />
 <code>#include &lt;<a class="el" href="algorithms_8hpp_source.html">GuidedFilter/algorithms.hpp</a>&gt;</code><br />
-<code>#include &lt;<a class="el" href="helperFuncs_8hpp_source.html">GuidedFilter/tests/helperFuncs.hpp</a>&gt;</code><br />
+<code>#include &lt;<a class="el" href="helper__funcs_8hpp_source.html">GuidedFilter/tests/helper_funcs.hpp</a>&gt;</code><br />
 </div><div class="textblock"><div class="dynheader">
 Include dependency graph for testsImageSupport.cpp:</div>
 <div class="dyncontent">
 <div class="center"><img src="testsImageSupport_8cpp__incl.png" border="0" usemap="#testsImageSupport_8cpp" alt=""/></div>
 <map name="testsImageSupport_8cpp" id="testsImageSupport_8cpp">
-<area shape="rect" id="node13" href="algorithms_8hpp.html" title="Declares classes that organize the execution of OpenCL kernels. " alt="" coords="999,80,1180,107"/>
-<area shape="rect" id="node16" href="helperFuncs_8hpp.html" title="Declarations of helper functions for testing. " alt="" coords="1240,155,1365,197"/>
-<area shape="rect" id="node14" href="math_8hpp.html" title="Declares classes that organize the execution of OpenCL math kernels. " alt="" coords="1014,163,1164,189"/>
-<area shape="rect" id="node15" href="common_8hpp.html" title="Declares classes used by the OpenCL interface classes in cl_algo. " alt="" coords="1060,245,1231,272"/>
+<area shape="rect" id="node13" href="algorithms_8hpp.html" title="Declares classes that organize the execution of OpenCL kernels. " alt="" coords="980,88,1161,115"/>
+<area shape="rect" id="node16" href="helper__funcs_8hpp.html" title="Declarations of helper functions for testing. " alt="" coords="1211,81,1336,122"/>
+<area shape="rect" id="node14" href="common_8hpp.html" title="Declares classes used by the OpenCL interface classes in cl_algo. " alt="" coords="1081,245,1252,272"/>
+<area shape="rect" id="node15" href="math_8hpp.html" title="Declares classes that organize the execution of OpenCL math kernels. " alt="" coords="1014,171,1164,197"/>
 </map>
 </div>
 </div><table class="memberdecls">
@@ -176,18 +176,6 @@ Variables</h2></td></tr>
 <tr class="memitem:a3bc67ebe39cde3e065da6e97d888633d"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a3bc67ebe39cde3e065da6e97d888633d"></a>
 const std::string&#160;</td><td class="memItemRight" valign="bottom"><b>kernel_filename_img</b> { &quot;kernels/imageSupport_kernels.cl&quot; }</td></tr>
 <tr class="separator:a3bc67ebe39cde3e065da6e97d888633d"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab7d0f6d1db87e4cf183798a465aac3fd"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ab7d0f6d1db87e4cf183798a465aac3fd"></a>
-std::function&lt; unsigned char()&gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="testsImageSupport_8cpp.html#ab7d0f6d1db87e4cf183798a465aac3fd">rNum_0_255</a></td></tr>
-<tr class="memdesc:ab7d0f6d1db87e4cf183798a465aac3fd"><td class="mdescLeft">&#160;</td><td class="mdescRight">Uniform number generator in the range \([0, 255]\). <br /></td></tr>
-<tr class="separator:ab7d0f6d1db87e4cf183798a465aac3fd"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a723a460856506af32562ffff750c0dd8"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a723a460856506af32562ffff750c0dd8"></a>
-std::function&lt; unsigned short()&gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="testsImageSupport_8cpp.html#a723a460856506af32562ffff750c0dd8">rNum_0_10000</a></td></tr>
-<tr class="memdesc:a723a460856506af32562ffff750c0dd8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Uniform number generator in the range \([0, 10000]\). <br /></td></tr>
-<tr class="separator:a723a460856506af32562ffff750c0dd8"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ad5dd01d045766c75bde87fc5daf6b3a1"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ad5dd01d045766c75bde87fc5daf6b3a1"></a>
-std::function&lt; float()&gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="testsImageSupport_8cpp.html#ad5dd01d045766c75bde87fc5daf6b3a1">rNum_R_0_1</a></td></tr>
-<tr class="memdesc:ad5dd01d045766c75bde87fc5daf6b3a1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Uniform number generator in the range \([0.0, 1.0)\). <br /></td></tr>
-<tr class="separator:ad5dd01d045766c75bde87fc5daf6b3a1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a515f670a32189cce28626f2585b26557"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a515f670a32189cce28626f2585b26557"></a>
 bool&#160;</td><td class="memItemRight" valign="bottom"><b>profiling</b></td></tr>
 <tr class="separator:a515f670a32189cce28626f2585b26557"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -441,7 +429,7 @@ The benchmarks in these tests are against naive CPU implementations of the assoc
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Sun May 3 2015 14:50:02 for GuidedFilter by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Thu May 14 2015 17:42:48 for GuidedFilter by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.9.1
 </small></address>

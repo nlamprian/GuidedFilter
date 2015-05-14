@@ -114,28 +114,26 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 </p>
 <h1>Note</h1>
 <hr/>
-<p> The code was developed and tested on <code>Ubuntu 14.04.1</code>, on a system with an <code>AMD R9 270X</code> GPU. <br />
+<p> The code was developed and tested on <code>Ubuntu 14.04.2</code>, on a system with an <code>AMD R9 270X</code> GPU.</p>
+<p>For more details on the implemented algorithms, take a look at the project's <a href="https://github.com/pAIgn10/GuidedFilter/wiki/Algorithms">wiki</a>. <br />
 <br />
 </p>
 <h1>Dependencies</h1>
 <hr/>
 <p> The project has a dependency on <a href="https://github.com/pAIgn10/CLUtils">CLUtils</a> (which is automatically downloaded by cmake). If you'd like to remove this dependency, you should be able to modify the kernel interface classes with minimal effort.</p>
-<p>There are currently 3 example applications. For <code>guided_filter_image</code>, you'll need <a href="https://github.com/jayrambhia/Install-OpenCV">OpenCV</a>. For <code>guided_filter_kinect_rgb</code> and <code>guided_filter_kinect_point_cloud</code>, you'll need a Kinect and <a href="https://github.com/OpenKinect/libfreenect/">libfreenect</a>. <br />
+<p>Currently, there are 3 example applications. For <code>guided_filter_image</code>, you'll need <a href="https://github.com/jayrambhia/Install-OpenCV">OpenCV</a>. For <code>guided_filter_kinect_rgb</code> and <code>guided_filter_kinect_point_cloud</code>, you'll need a Kinect and <a href="https://github.com/OpenKinect/libfreenect/">libfreenect</a>. <br />
 <br />
 </p>
 <h1>Compilation</h1>
 <hr/>
  <blockquote class="doxtable">
 <p>git clone <a href="https://github.com/pAIgn10/GuidedFilter.git">https://github.com/pAIgn10/GuidedFilter.git</a> <br />
- cd GuidedFilter <br />
-</p>
+ cd GuidedFilter</p>
 <p>mkdir build <br />
- cd build <br />
-</p>
+ cd build</p>
 <p>cmake .. <br />
  # or to build the tests too <br />
- cmake -DBUILD_TESTS=ON .. <br />
-</p>
+ cmake -DBUILD_TESTS=ON ..</p>
 <p>make</p>
 <p># to run the examples (from the build directory!) <br />
  ./bin/guided_filter_image <br />
@@ -156,7 +154,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 </div></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Sun May 3 2015 14:50:02 for GuidedFilter by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Thu May 14 2015 17:42:48 for GuidedFilter by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.9.1
 </small></address>

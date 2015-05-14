@@ -118,7 +118,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 </div><!--header-->
 <div class="contents">
 
-<p>Interface class for the <code><a class="el" href="classcl__algo_1_1GF_1_1Scan.html" title="Interface class for the Scan kernel. ">Scan</a></code> kernel.  
+<p>Interface class for the <code>scan</code> kernel.  
  <a href="classcl__algo_1_1GF_1_1Scan.html#details">More...</a></p>
 
 <p><code>#include &lt;<a class="el" href="algorithms_8hpp_source.html">algorithms.hpp</a>&gt;</code></p>
@@ -176,11 +176,11 @@ Public Attributes</h2></td></tr>
 <tr class="separator:a06283579e6490abf3639414d1ac04799"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>Interface class for the <code><a class="el" href="classcl__algo_1_1GF_1_1Scan.html" title="Interface class for the Scan kernel. ">Scan</a></code> kernel. </p>
-<p><code><a class="el" href="classcl__algo_1_1GF_1_1Scan.html" title="Interface class for the Scan kernel. ">Scan</a></code> performs a scan operation on each row in an array. For more details, look at the kernel's documentation. </p><dl class="section note"><dt>Note</dt><dd>The <code><a class="el" href="classcl__algo_1_1GF_1_1Scan.html" title="Interface class for the Scan kernel. ">Scan</a></code> kernel is available in <code><a class="el" href="scan__kernels_8cl.html" title="Kernels for performing the Scan operation. ">kernels/scan_kernels.cl</a></code>. </dd>
+<div class="textblock"><p>Interface class for the <code>scan</code> kernel. </p>
+<p><code>scan</code> performs a scan operation on each row in an array. For more details, look at the kernel's documentation. </p><dl class="section note"><dt>Note</dt><dd>The <code>scan</code> kernel is available in <code><a class="el" href="scan__kernels_8cl.html" title="Kernels for performing the Scan operation. ">kernels/scan_kernels.cl</a></code>. </dd>
 <dd>
 The class creates its own buffers. If you would like to provide your own buffers, call <code>get</code> to get references to the placeholders within the class and assign them to your buffers. You will have to do this strictly before the call to <code>init</code>. You can also call <code>get</code> (after the call to <code>init</code>) to get a reference to a buffer within the class and assign it to another kernel class instance further down in your task pipeline.</dd></dl>
-<p>The following input/output <code>OpenCL</code> memory objects are created by a <code><a class="el" href="classcl__algo_1_1GF_1_1Scan.html" title="Interface class for the Scan kernel. ">Scan</a></code> instance:<br />
+<p>The following input/output <code>OpenCL</code> memory objects are created by a <code><a class="el" href="classcl__algo_1_1GF_1_1Scan.html" title="Interface class for the scan kernel. ">Scan</a></code> instance:<br />
  </p><table class="doxtable">
 <tr>
 <th>Name </th><th align="center">Type </th><th align="center">Placement </th><th align="center">I/O </th><th align="center">Use </th><th align="center">Properties </th><th align="center">Size  </th></tr>
@@ -611,7 +611,7 @@ template&lt;typename period &gt; </div>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Sun May 3 2015 14:50:02 for GuidedFilter by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Thu May 14 2015 17:42:48 for GuidedFilter by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.9.1
 </small></address>
