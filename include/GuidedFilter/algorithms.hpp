@@ -33,9 +33,8 @@
 #define ALGORITHMS_HPP
 
 #include <CLUtils.hpp>
-#include <GuidedFilter/math.hpp>
 #include <GuidedFilter/common.hpp>
-#include <GuidedFilter/tests/helperFuncs.hpp>
+#include <GuidedFilter/math.hpp>
 
 
 /*! \brief Offers classes which set up kernel execution parameters and 
@@ -900,10 +899,10 @@ namespace GF
     };
 
 
-    /*! \brief Interface class for the `Scan` kernel.
-     *  \details `Scan` performs a scan operation on each row in an array. 
+    /*! \brief Interface class for the `scan` kernel.
+     *  \details `scan` performs a scan operation on each row in an array. 
      *           For more details, look at the kernel's documentation.
-     *  \note The `Scan` kernel is available in `kernels/scan_kernels.cl`.
+     *  \note The `scan` kernel is available in `kernels/scan_kernels.cl`.
      *  \note The class creates its own buffers. If you would like to provide 
      *        your own buffers, call `get` to get references to the placeholders 
      *        within the class and assign them to your buffers. You will have to 

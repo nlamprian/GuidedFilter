@@ -42,16 +42,19 @@
 #include <gtest/gtest.h>
 #include <CLUtils.hpp>
 #include <GuidedFilter/algorithms.hpp>
-#include <GuidedFilter/tests/helperFuncs.hpp>
+#include <GuidedFilter/tests/helper_funcs.hpp>
 
 
 // Kernel filenames
 const std::string kernel_filename_img { "kernels/imageSupport_kernels.cl" };
 
-// Uniform random number generators
-extern std::function<unsigned char ()> rNum_0_255;
-extern std::function<unsigned short ()> rNum_0_10000;
-extern std::function<float ()> rNum_R_0_1;
+namespace GF
+{
+    // Uniform random number generators
+    extern std::function<unsigned char ()> rNum_0_255;
+    extern std::function<unsigned short ()> rNum_0_10000;
+    extern std::function<float ()> rNum_R_0_1;
+}
 
 bool profiling;  // Flag to enable profiling of the kernels
 
@@ -81,8 +84,8 @@ TEST (ImageSupport, separateRGBChannels_Float2Float)
         sRGB.init (width, height);
 
         // Initialize data (writes on staging buffer directly)
-        std::generate (sRGB.hPtrIn, sRGB.hPtrIn + bufferInSize / sizeof (cl_float), rNum_0_255);
-        // printBuffer ("Original:", sRGB.hPtrIn, 3, width * height);
+        std::generate (sRGB.hPtrIn, sRGB.hPtrIn + bufferInSize / sizeof (cl_float), GF::rNum_0_255);
+        // GF::printBuffer ("Original:", sRGB.hPtrIn, 3, width * height);
         
         sRGB.write ();  // Copy data to device
 
@@ -92,18 +95,18 @@ TEST (ImageSupport, separateRGBChannels_Float2Float)
         cl_float *R = (cl_float *) sRGB.read (cl_algo::GF::SeparateRGB<C>::Memory::H_OUT_R, CL_FALSE);
         cl_float *G = (cl_float *) sRGB.read (cl_algo::GF::SeparateRGB<C>::Memory::H_OUT_G, CL_FALSE);
         cl_float *B = (cl_float *) sRGB.read (cl_algo::GF::SeparateRGB<C>::Memory::H_OUT_B);
-        // printBufferF ("Received R:", R, width, height, 1);
-        // printBufferF ("Received G:", G, width, height, 1);
-        // printBufferF ("Received B:", B, width, height, 1);
+        // GF::printBufferF ("Received R:", R, width, height, 1);
+        // GF::printBufferF ("Received G:", G, width, height, 1);
+        // GF::printBufferF ("Received B:", B, width, height, 1);
 
         // Produce reference transposed image
         cl_float *refR = new cl_float[pixels];
         cl_float *refG = new cl_float[pixels];
         cl_float *refB = new cl_float[pixels];
-        cpuSeparateRGB (sRGB.hPtrIn, refR, refG, refB, pixels);
-        // printBuffer ("Expected R:", refR, width, height);
-        // printBuffer ("Expected G:", refG, width, height);
-        // printBuffer ("Expected B:", refB, width, height);
+        GF::cpuSeparateRGB (sRGB.hPtrIn, refR, refG, refB, pixels);
+        // GF::printBuffer ("Expected R:", refR, width, height);
+        // GF::printBuffer ("Expected G:", refG, width, height);
+        // GF::printBuffer ("Expected B:", refB, width, height);
 
         // Verify the **transposed** array
         for (uint i = 0; i < pixels; ++i)
@@ -124,7 +127,7 @@ TEST (ImageSupport, separateRGBChannels_Float2Float)
             for (int i = 0; i < nRepeat; ++i)
             {
                 cTimer.start ();
-                cpuSeparateRGB (sRGB.hPtrIn, refR, refG, refB, pixels);
+                GF::cpuSeparateRGB (sRGB.hPtrIn, refR, refG, refB, pixels);
                 pCPU[i] = cTimer.stop ();
             }
             
@@ -174,8 +177,8 @@ TEST (ImageSupport, separateRGBChannels_Uchar2Float)
         sRGB.init (width, height);
 
         // Initialize data (writes on staging buffer directly)
-        std::generate (sRGB.hPtrIn, sRGB.hPtrIn + bufferInSize / sizeof (cl_uchar), rNum_0_255);
-        // printBuffer ("Original:", sRGB.hPtrIn, 3, width * height);
+        std::generate (sRGB.hPtrIn, sRGB.hPtrIn + bufferInSize / sizeof (cl_uchar), GF::rNum_0_255);
+        // GF::printBuffer ("Original:", sRGB.hPtrIn, 3, width * height);
         
         sRGB.write ();  // Copy data to device
 
@@ -185,18 +188,18 @@ TEST (ImageSupport, separateRGBChannels_Uchar2Float)
         cl_float *R = (cl_float *) sRGB.read (cl_algo::GF::SeparateRGB<C>::Memory::H_OUT_R, CL_FALSE);
         cl_float *G = (cl_float *) sRGB.read (cl_algo::GF::SeparateRGB<C>::Memory::H_OUT_G, CL_FALSE);
         cl_float *B = (cl_float *) sRGB.read (cl_algo::GF::SeparateRGB<C>::Memory::H_OUT_B);
-        // printBufferF ("Received R:", R, width, height, 1);
-        // printBufferF ("Received G:", G, width, height, 1);
-        // printBufferF ("Received B:", B, width, height, 1);
+        // GF::printBufferF ("Received R:", R, width, height, 1);
+        // GF::printBufferF ("Received G:", G, width, height, 1);
+        // GF::printBufferF ("Received B:", B, width, height, 1);
 
         // Produce reference transposed image
         cl_float *refR = new float[pixels];
         cl_float *refG = new float[pixels];
         cl_float *refB = new float[pixels];
-        cpuSeparateRGB_N_Norm (sRGB.hPtrIn, refR, refG, refB, pixels);
-        // printBufferF ("Expected R:", refR, width, height, 1);
-        // printBufferF ("Expected G:", refG, width, height, 1);
-        // printBufferF ("Expected B:", refB, width, height, 1);
+        GF::cpuSeparateRGB_N_Norm (sRGB.hPtrIn, refR, refG, refB, pixels);
+        // GF::printBufferF ("Expected R:", refR, width, height, 1);
+        // GF::printBufferF ("Expected G:", refG, width, height, 1);
+        // GF::printBufferF ("Expected B:", refB, width, height, 1);
 
         // Verify the **transposed** array
         float eps = 42 * std::numeric_limits<float>::epsilon ();  // 5.00679e-06
@@ -218,7 +221,7 @@ TEST (ImageSupport, separateRGBChannels_Uchar2Float)
             for (int i = 0; i < nRepeat; ++i)
             {
                 cTimer.start ();
-                cpuSeparateRGB_N_Norm (sRGB.hPtrIn, refR, refG, refB, pixels);
+                GF::cpuSeparateRGB_N_Norm (sRGB.hPtrIn, refR, refG, refB, pixels);
                 pCPU[i] = cTimer.stop ();
             }
             
@@ -268,12 +271,12 @@ TEST (ImageSupport, combineRGBChannels_Float2Float)
         cRGB.init (width, height);
 
         // Initialize data (writes on staging buffer directly)
-        std::generate (cRGB.hPtrInR, cRGB.hPtrInR + pixels, rNum_0_255);
-        std::generate (cRGB.hPtrInG, cRGB.hPtrInG + pixels, rNum_0_255);
-        std::generate (cRGB.hPtrInB, cRGB.hPtrInB + pixels, rNum_0_255);
-        // printBuffer ("Original R:", cRGB.hPtrInR, width, height);
-        // printBuffer ("Original G:", cRGB.hPtrInG, width, height);
-        // printBuffer ("Original B:", cRGB.hPtrInB, width, height);
+        std::generate (cRGB.hPtrInR, cRGB.hPtrInR + pixels, GF::rNum_0_255);
+        std::generate (cRGB.hPtrInG, cRGB.hPtrInG + pixels, GF::rNum_0_255);
+        std::generate (cRGB.hPtrInB, cRGB.hPtrInB + pixels, GF::rNum_0_255);
+        // GF::printBuffer ("Original R:", cRGB.hPtrInR, width, height);
+        // GF::printBuffer ("Original G:", cRGB.hPtrInG, width, height);
+        // GF::printBuffer ("Original B:", cRGB.hPtrInB, width, height);
         
         // Copy data to device
         cRGB.write (cl_algo::GF::CombineRGB<C>::Memory::D_IN_R);
@@ -283,12 +286,12 @@ TEST (ImageSupport, combineRGBChannels_Float2Float)
         cRGB.run ();  // Execute kernels (82 us)
         
         cl_float *results = (cl_float *) cRGB.read ();  // Copy results to host
-        // printBuffer ("Received:", results, 3, width * height);
+        // GF::printBuffer ("Received:", results, 3, width * height);
 
         // Produce reference transposed image
         cl_float *refCombRGB = new cl_float[3 * pixels];
-        cpuCombineRGB (cRGB.hPtrInR, cRGB.hPtrInG, cRGB.hPtrInB, refCombRGB, pixels);
-        // printBuffer ("Expected:", refCombRGB, 3, width * height);
+        GF::cpuCombineRGB (cRGB.hPtrInR, cRGB.hPtrInG, cRGB.hPtrInB, refCombRGB, pixels);
+        // GF::printBuffer ("Expected:", refCombRGB, 3, width * height);
 
         // Verify the **transposed** array
         for (uint i = 0; i < pixels; ++i)
@@ -309,7 +312,7 @@ TEST (ImageSupport, combineRGBChannels_Float2Float)
             for (int i = 0; i < nRepeat; ++i)
             {
                 cTimer.start ();
-                cpuCombineRGB (cRGB.hPtrInR, cRGB.hPtrInG, cRGB.hPtrInB, refCombRGB, pixels);
+                GF::cpuCombineRGB (cRGB.hPtrInR, cRGB.hPtrInG, cRGB.hPtrInB, refCombRGB, pixels);
                 pCPU[i] = cTimer.stop ();
             }
             
@@ -359,12 +362,12 @@ TEST (ImageSupport, combineRGBChannels_Float2Uchar)
         cRGB.init (width, height);
 
         // Initialize data (writes on staging buffer directly)
-        std::generate (cRGB.hPtrInR, cRGB.hPtrInR + pixels, rNum_R_0_1);
-        std::generate (cRGB.hPtrInG, cRGB.hPtrInG + pixels, rNum_R_0_1);
-        std::generate (cRGB.hPtrInB, cRGB.hPtrInB + pixels, rNum_R_0_1);
-        // printBufferF ("Original R:", cRGB.hPtrInR, width, height, 0);
-        // printBufferF ("Original G:", cRGB.hPtrInG, width, height, 0);
-        // printBufferF ("Original B:", cRGB.hPtrInB, width, height, 0);
+        std::generate (cRGB.hPtrInR, cRGB.hPtrInR + pixels, GF::rNum_R_0_1);
+        std::generate (cRGB.hPtrInG, cRGB.hPtrInG + pixels, GF::rNum_R_0_1);
+        std::generate (cRGB.hPtrInB, cRGB.hPtrInB + pixels, GF::rNum_R_0_1);
+        // GF::printBufferF ("Original R:", cRGB.hPtrInR, width, height, 0);
+        // GF::printBufferF ("Original G:", cRGB.hPtrInG, width, height, 0);
+        // GF::printBufferF ("Original B:", cRGB.hPtrInB, width, height, 0);
         
         // Copy data to device
         cRGB.write (cl_algo::GF::CombineRGB<C>::Memory::D_IN_R);
@@ -374,12 +377,12 @@ TEST (ImageSupport, combineRGBChannels_Float2Uchar)
         cRGB.run ();  // Execute kernels (82 us)
         
         cl_uchar *results = (cl_uchar *) cRGB.read ();  // Copy results to host
-        // printBuffer ("Received:", results, 3, width * height);
+        // GF::printBuffer ("Received:", results, 3, width * height);
 
         // Produce reference transposed image
         cl_uchar *refCombRGB = new cl_uchar[3 * pixels];
-        cpuTranspose_N_Scale (cRGB.hPtrInR, cRGB.hPtrInG, cRGB.hPtrInB, refCombRGB, pixels);
-        // printBuffer ("Expected:", refCombRGB, 3, width * height);
+        GF::cpuTranspose_N_Scale (cRGB.hPtrInR, cRGB.hPtrInG, cRGB.hPtrInB, refCombRGB, pixels);
+        // GF::printBuffer ("Expected:", refCombRGB, 3, width * height);
 
         // Verify the **transposed** array
         for (uint i = 0; i < pixels; ++i)
@@ -400,7 +403,7 @@ TEST (ImageSupport, combineRGBChannels_Float2Uchar)
             for (int i = 0; i < nRepeat; ++i)
             {
                 cTimer.start ();
-                cpuTranspose_N_Scale (cRGB.hPtrInR, cRGB.hPtrInG, cRGB.hPtrInB, refCombRGB, pixels);
+                GF::cpuTranspose_N_Scale (cRGB.hPtrInR, cRGB.hPtrInG, cRGB.hPtrInB, refCombRGB, pixels);
                 pCPU[i] = cTimer.stop ();
             }
             
@@ -448,8 +451,8 @@ TEST (ImageSupport, depth_Ushort2Float)
         df.init (width, height);
         
         // Initialize data (writes on staging buffer directly)
-        std::generate (df.hPtrIn, df.hPtrIn + bufferInSize / sizeof (cl_ushort), rNum_0_10000);
-        // printBuffer ("Original:", df.hPtrIn, width, height);
+        std::generate (df.hPtrIn, df.hPtrIn + bufferInSize / sizeof (cl_ushort), GF::rNum_0_10000);
+        // GF::printBuffer ("Original:", df.hPtrIn, width, height);
         
         df.write ();  // Copy data to device
 
@@ -530,8 +533,8 @@ TEST (ImageSupport, depthTo3D)
         d3.init (width, height, f);
         
         // Initialize data (writes on staging buffer directly)
-        std::generate (d3.hPtrIn, d3.hPtrIn + nPoints, rNum_0_10000);
-        // printBuffer ("Original:", d3.hPtrIn, width, height);
+        std::generate (d3.hPtrIn, d3.hPtrIn + nPoints, GF::rNum_0_10000);
+        // GF::printBuffer ("Original:", d3.hPtrIn, width, height);
         
         d3.write ();  // Copy data to device
 
@@ -542,7 +545,7 @@ TEST (ImageSupport, depthTo3D)
 
         // Produce reference point cloud
         cl_float4 *refPCloud = new cl_float4[width * height];
-        cpuDepthTo3D (d3.hPtrIn, refPCloud, width, height, f);
+        GF::cpuDepthTo3D (d3.hPtrIn, refPCloud, width, height, f);
 
         // Verify point cloud
         float eps = 4200 * std::numeric_limits<float>::epsilon ();  // 0.000500679
@@ -570,7 +573,7 @@ TEST (ImageSupport, depthTo3D)
             for (int i = 0; i < nRepeat; ++i)
             {
                 cTimer.start ();
-                cpuDepthTo3D (d3.hPtrIn, refPCloud, width, height, f);
+                GF::cpuDepthTo3D (d3.hPtrIn, refPCloud, width, height, f);
                 pCPU[i] = cTimer.stop ();
             }
 
@@ -617,20 +620,20 @@ TEST (ImageSupport, rgbNorm)
         norm.init (width, height);
 
         // Initialize data (writes on staging buffer directly)
-        std::generate (norm.hPtrIn, norm.hPtrIn + bufferSize / sizeof (cl_float), rNum_0_255);
-        // printBuffer ("Original:", norm.hPtrIn, 3, width * height);
+        std::generate (norm.hPtrIn, norm.hPtrIn + bufferSize / sizeof (cl_float), GF::rNum_0_255);
+        // GF::printBuffer ("Original:", norm.hPtrIn, 3, width * height);
         
         norm.write ();  // Copy data to device
 
         norm.run ();  // Execute kernels (50 us)
         
         cl_float *results = (cl_float *) norm.read ();  // Copy results to host
-        // printBuffer ("Received:", results, 3, width * height);
+        // GF::printBuffer ("Received:", results, 3, width * height);
 
         // Produce reference RGB normalized image
         cl_float *refRGBNorm = new cl_float[bufferSize];
-        cpuRGBNorm (norm.hPtrIn, refRGBNorm, width, height);
-        // printBuffer ("Expected:", refRGBNorm, 3, width * height);
+        GF::cpuRGBNorm (norm.hPtrIn, refRGBNorm, width, height);
+        // GF::printBuffer ("Expected:", refRGBNorm, 3, width * height);
 
         // Verify the normalized image
         float eps = 420 * std::numeric_limits<float>::epsilon ();  // 5.00679e-05
@@ -657,7 +660,7 @@ TEST (ImageSupport, rgbNorm)
             for (int i = 0; i < nRepeat; ++i)
             {
                 cTimer.start ();
-                cpuRGBNorm (norm.hPtrIn, refRGBNorm, width, height);
+                GF::cpuRGBNorm (norm.hPtrIn, refRGBNorm, width, height);
                 pCPU[i] = cTimer.stop ();
             }
             
@@ -707,14 +710,14 @@ TEST (ImageSupport, rgbdTo8D)
         to8D.init (width, height, f);
 
         // Initialize data (writes on staging buffer directly)
-        std::generate (to8D.hPtrInD, to8D.hPtrInD + points, rNum_0_10000);
-        std::generate (to8D.hPtrInR, to8D.hPtrInR + points, rNum_R_0_1);
-        std::generate (to8D.hPtrInG, to8D.hPtrInG + points, rNum_R_0_1);
-        std::generate (to8D.hPtrInB, to8D.hPtrInB + points, rNum_R_0_1);
-        // printBufferF ("Original D:", to8D.hPtrInD, width, height, 1);
-        // printBufferF ("Original R:", to8D.hPtrInR, width, height, 1);
-        // printBufferF ("Original G:", to8D.hPtrInG, width, height, 1);
-        // printBufferF ("Original B:", to8D.hPtrInB, width, height, 1);
+        std::generate (to8D.hPtrInD, to8D.hPtrInD + points, GF::rNum_0_10000);
+        std::generate (to8D.hPtrInR, to8D.hPtrInR + points, GF::rNum_R_0_1);
+        std::generate (to8D.hPtrInG, to8D.hPtrInG + points, GF::rNum_R_0_1);
+        std::generate (to8D.hPtrInB, to8D.hPtrInB + points, GF::rNum_R_0_1);
+        // GF::printBufferF ("Original D:", to8D.hPtrInD, width, height, 1);
+        // GF::printBufferF ("Original R:", to8D.hPtrInR, width, height, 1);
+        // GF::printBufferF ("Original G:", to8D.hPtrInG, width, height, 1);
+        // GF::printBufferF ("Original B:", to8D.hPtrInB, width, height, 1);
         
         // Copy data to device
         to8D.write (cl_algo::GF::RGBDTo8D::Memory::D_IN_D);
@@ -725,12 +728,12 @@ TEST (ImageSupport, rgbdTo8D)
         to8D.run ();  // Execute kernels (121 us)
         
         cl_float8 *results = (cl_float8 *) to8D.read ();  // Copy results to host
-        // printBufferF ("Received:", (cl_float *) results, 8, points, 1);
+        // GF::printBufferF ("Received:", (cl_float *) results, 8, points, 1);
 
         // Produce reference 8D feature points
         cl_float8 *ref8D = new cl_float8[points];
-        cpuRGBDTo8D (to8D.hPtrInD, to8D.hPtrInR, to8D.hPtrInG, to8D.hPtrInB, ref8D, width, height, f);
-        // printBufferF ("Expected:", (cl_float *) ref8D, 8, points, 1);
+        GF::cpuRGBDTo8D (to8D.hPtrInD, to8D.hPtrInR, to8D.hPtrInG, to8D.hPtrInB, ref8D, width, height, f);
+        // GF::printBufferF ("Expected:", (cl_float *) ref8D, 8, points, 1);
 
         // Verify the array of 8D feature points
         float eps = 4200 * std::numeric_limits<float>::epsilon ();  // 0.000500679
@@ -754,7 +757,7 @@ TEST (ImageSupport, rgbdTo8D)
             for (int i = 0; i < nRepeat; ++i)
             {
                 cTimer.start ();
-                cpuRGBDTo8D (to8D.hPtrInD, to8D.hPtrInR, to8D.hPtrInG, to8D.hPtrInB, ref8D, width, height, f);
+                GF::cpuRGBDTo8D (to8D.hPtrInD, to8D.hPtrInR, to8D.hPtrInG, to8D.hPtrInB, ref8D, width, height, f);
                 pCPU[i] = cTimer.stop ();
             }
             
@@ -781,7 +784,7 @@ TEST (ImageSupport, rgbdTo8D)
 
 int main (int argc, char **argv)
 {
-    profiling = setProfilingFlag (argc, argv);
+    profiling = GF::setProfilingFlag (argc, argv);
 
     ::testing::InitGoogleTest (&argc, argv);
 

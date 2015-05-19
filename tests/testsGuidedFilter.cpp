@@ -41,7 +41,7 @@
 #include <gtest/gtest.h>
 #include <CLUtils.hpp>
 #include <GuidedFilter/algorithms.hpp>
-#include <GuidedFilter/tests/helperFuncs.hpp>
+#include <GuidedFilter/tests/helper_funcs.hpp>
 
 
 // Kernel filenames
@@ -52,10 +52,13 @@ const std::string kernel_filename_box  { "kernels/boxFilter_kernels.cl"    };
 const std::string kernel_filename_math { "kernels/math_kernels.cl"         };
 const std::string kernel_filename_gf   { "kernels/guidedFilter_kernels.cl" };
 
-// Uniform random number generators
-extern std::function<unsigned char ()> rNum_0_255;
-extern std::function<unsigned short ()> rNum_0_10000;
-extern std::function<float ()> rNum_R_0_1;
+namespace GF
+{
+    // Uniform random number generators
+    extern std::function<unsigned char ()> rNum_0_255;
+    extern std::function<unsigned short ()> rNum_0_10000;
+    extern std::function<float ()> rNum_R_0_1;
+}
 
 bool profiling;  // Flag to enable profiling of the kernels
 
@@ -90,20 +93,20 @@ TEST (GuidedFilter, guidedFilter)
         gf.init (width, height, gfRadius, gfEps);
 
         // Initialize data (writes on staging buffer directly)
-        std::generate (gf.hPtrIn, gf.hPtrIn + bufferSize / sizeof (cl_float), rNum_R_0_1);
-        // printBufferF ("Original:", gf.hPtrIn, width, height, 3);
+        std::generate (gf.hPtrIn, gf.hPtrIn + bufferSize / sizeof (cl_float), GF::rNum_R_0_1);
+        // GF::printBufferF ("Original:", gf.hPtrIn, width, height, 3);
 
         gf.write ();  // Copy data to device
 
         gf.run ();  // Execute kernels (~ 0.790 ms)
         
         cl_float *results = (cl_float *) gf.read ();  // Copy results to host
-        // printBufferF ("Received:", results, width, height, 3);
+        // GF::printBufferF ("Received:", results, width, height, 3);
 
         // Produce reference filtered array
         cl_float *refGF = new cl_float[width * height];
-        cpuGuidedFilter (gf.hPtrIn, refGF, width, height, gfRadius, gfEps);
-        // printBufferF ("Expected:", refGF, width, height, 3);
+        GF::cpuGuidedFilter (gf.hPtrIn, refGF, width, height, gfRadius, gfEps);
+        // GF::printBufferF ("Expected:", refGF, width, height, 3);
 
         // Verify filtered output (~ 0.0004 error)
         float eps = 42000 * std::numeric_limits<float>::epsilon ();  // 0.00500679
@@ -122,7 +125,7 @@ TEST (GuidedFilter, guidedFilter)
             for (int i = 0; i < nRepeat; ++i)
             {
                 cTimer.start ();
-                cpuGuidedFilter (gf.hPtrIn, refGF, width, height, gfRadius, gfEps);
+                GF::cpuGuidedFilter (gf.hPtrIn, refGF, width, height, gfRadius, gfEps);
                 pCPU[i] = cTimer.stop ();
             }
             
@@ -180,10 +183,10 @@ TEST (GuidedFilter, guidedFilterIp)
         gf.init (width, height, gfRadius, gfEps);
 
         // Initialize data (writes on staging buffer directly)
-        std::generate (gf.hPtrInI, gf.hPtrInI + bufferSize / sizeof (cl_float), rNum_R_0_1);
-        std::generate (gf.hPtrInP, gf.hPtrInP + bufferSize / sizeof (cl_float), rNum_R_0_1);
-        // printBufferF ("Original I:", gf.hPtrInI, width, height, 3);
-        // printBufferF ("Original p:", gf.hPtrInP, width, height, 3);
+        std::generate (gf.hPtrInI, gf.hPtrInI + bufferSize / sizeof (cl_float), GF::rNum_R_0_1);
+        std::generate (gf.hPtrInP, gf.hPtrInP + bufferSize / sizeof (cl_float), GF::rNum_R_0_1);
+        // GF::printBufferF ("Original I:", gf.hPtrInI, width, height, 3);
+        // GF::printBufferF ("Original p:", gf.hPtrInP, width, height, 3);
 
         // Copy data to device
         gf.write (cl_algo::GF::GuidedFilter<Ip>::Memory::D_IN_I);
@@ -192,12 +195,12 @@ TEST (GuidedFilter, guidedFilterIp)
         gf.run ();  // Execute kernels (~ 1.120 ms)
         
         cl_float *results = (cl_float *) gf.read ();  // Copy results to host
-        // printBufferF ("Received:", results, width, height, 3);
+        // GF::printBufferF ("Received:", results, width, height, 3);
 
         // Produce reference filtered array
         cl_float *refGF = new cl_float[width * height];
-        cpuGuidedFilter (gf.hPtrInI, refGF, width, height, gfRadius, gfEps);
-        // printBufferF ("Expected:", refGF, width, height, 3);
+        GF::cpuGuidedFilter (gf.hPtrInI, refGF, width, height, gfRadius, gfEps);
+        // GF::printBufferF ("Expected:", refGF, width, height, 3);
 
         // Verify filtered output (~ 0.0006 error)
         float eps = 42000 * std::numeric_limits<float>::epsilon ();  // 0.00500679
@@ -216,7 +219,7 @@ TEST (GuidedFilter, guidedFilterIp)
             for (int i = 0; i < nRepeat; ++i)
             {
                 cTimer.start ();
-                cpuGuidedFilter (gf.hPtrInI, refGF, width, height, gfRadius, gfEps);
+                GF::cpuGuidedFilter (gf.hPtrInI, refGF, width, height, gfRadius, gfEps);
                 pCPU[i] = cTimer.stop ();
             }
             
@@ -243,7 +246,7 @@ TEST (GuidedFilter, guidedFilterIp)
 
 int main (int argc, char **argv)
 {
-    profiling = setProfilingFlag (argc, argv);
+    profiling = GF::setProfilingFlag (argc, argv);
 
     ::testing::InitGoogleTest (&argc, argv);
     

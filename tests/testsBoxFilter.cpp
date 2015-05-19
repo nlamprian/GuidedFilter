@@ -41,7 +41,7 @@
 #include <gtest/gtest.h>
 #include <CLUtils.hpp>
 #include <GuidedFilter/algorithms.hpp>
-#include <GuidedFilter/tests/helperFuncs.hpp>
+#include <GuidedFilter/tests/helper_funcs.hpp>
 
 
 // Kernel filenames
@@ -49,11 +49,14 @@ const std::string kernel_filename_scan { "kernels/scan_kernels.cl"      };
 const std::string kernel_filename_tr   { "kernels/transpose_kernels.cl" };
 const std::string kernel_filename_box  { "kernels/boxFilter_kernels.cl" };
 
-// Uniform random number generators
-extern std::function<unsigned char ()> rNum_0_255;
-extern std::function<unsigned short ()> rNum_0_10000;
-extern std::function<float ()> rNum_R_0_1;
-extern std::function<float ()> rNum_R_1_255_E__6;
+namespace GF
+{
+    // Uniform random number generators
+    extern std::function<unsigned char ()> rNum_0_255;
+    extern std::function<unsigned short ()> rNum_0_10000;
+    extern std::function<float ()> rNum_R_0_1;
+    extern std::function<float ()> rNum_R_1_255_E__6;
+}
 
 bool profiling;  // Flag to enable profiling of the kernels
 
@@ -80,8 +83,8 @@ TEST (BoxFilter, scan)
         scan.init (width, height);
 
         // Initialize data (writes on staging buffer directly)
-        std::generate (scan.hPtrIn, scan.hPtrIn + bufferSize / sizeof (cl_float), rNum_R_1_255_E__6);
-        // printBufferF ("Original:", scan.hPtrIn, width, height, 3);
+        std::generate (scan.hPtrIn, scan.hPtrIn + bufferSize / sizeof (cl_float), GF::rNum_R_1_255_E__6);
+        // GF::printBufferF ("Original:", scan.hPtrIn, width, height, 3);
 
         scan.write ();  // Copy data to device
 
@@ -91,15 +94,15 @@ TEST (BoxFilter, scan)
         // cl_float groupSums[bufferSize / width];
         // queue.enqueueReadBuffer ((cl::Buffer &) scan.get (scan.Memory::D_SUMS), 
         //                          CL_TRUE, 0, bufferSize / width, groupSums);
-        // printBufferF ("\nPartial Sums:", groupSums, height, 1, 3);
+        // GF::printBufferF ("\nPartial Sums:", groupSums, height, 1, 3);
 
         cl_float *results = (cl_float *) scan.read ();  // Copy results to host
-        // printBufferF ("Received:", results, width, height, 3);
+        // GF::printBufferF ("Received:", results, width, height, 3);
 
         // Produce reference scan array
         cl_float refScan[width * height];
-        cpuScan (scan.hPtrIn, refScan, width, height);
-        // printBufferF ("Expected:", refScan, width, height, 3);
+        GF::cpuScan (scan.hPtrIn, refScan, width, height);
+        // GF::printBufferF ("Expected:", refScan, width, height, 3);
 
         // Verify scan output
         float eps = 42 * std::numeric_limits<float>::epsilon ();  // 5.00679e-06
@@ -118,7 +121,7 @@ TEST (BoxFilter, scan)
             for (int i = 0; i < nRepeat; ++i)
             {
                 cTimer.start ();
-                cpuScan (scan.hPtrIn, refScan, width, height);
+                GF::cpuScan (scan.hPtrIn, refScan, width, height);
                 pCPU[i] = cTimer.stop ();
             }
             
@@ -165,20 +168,20 @@ TEST (BoxFilter, transpose)
         transpose.init (width, height);
 
         // Initialize data (writes on staging buffer directly)
-        std::generate (transpose.hPtrIn, transpose.hPtrIn + bufferSize / sizeof (cl_float), rNum_R_0_1);
-        // printBufferF ("Original:", transpose.hPtrIn, width, height, 3);
+        std::generate (transpose.hPtrIn, transpose.hPtrIn + bufferSize / sizeof (cl_float), GF::rNum_R_0_1);
+        // GF::printBufferF ("Original:", transpose.hPtrIn, width, height, 3);
         
         transpose.write ();  // Copy data to device
 
         transpose.run ();  // Execute kernels (23 us)
         
         cl_float *results = (cl_float *) transpose.read ();  // Copy results to host
-        // printBufferF ("Received:", results, width, height, 3);
+        // GF::printBufferF ("Received:", results, width, height, 3);
 
         // Produce reference transposed array
         cl_float refTr[width * height];
-        cpuTranspose (transpose.hPtrIn, refTr, width, height);
-        // printBufferF ("Expected:", refTr, width, height, 3);
+        GF::cpuTranspose (transpose.hPtrIn, refTr, width, height);
+        // GF::printBufferF ("Expected:", refTr, width, height, 3);
 
         // Verify transposed output
         for (uint row = 0; row < height; ++row)
@@ -196,7 +199,7 @@ TEST (BoxFilter, transpose)
             for (int i = 0; i < nRepeat; ++i)
             {
                 cTimer.start ();
-                cpuScan (transpose.hPtrIn, refTr, width, height);
+                GF::cpuScan (transpose.hPtrIn, refTr, width, height);
                 pCPU[i] = cTimer.stop ();
             }
             
@@ -246,21 +249,21 @@ TEST (BoxFilter, sat)
         sat.init (width, height);
 
         // Initialize data (writes on staging buffer directly)
-        std::generate (sat.hPtrIn, sat.hPtrIn + bufferSize / sizeof (cl_float), rNum_R_1_255_E__6);
-        // printBufferF ("Original:", sat.hPtrIn, width, height, 3);
+        std::generate (sat.hPtrIn, sat.hPtrIn + bufferSize / sizeof (cl_float), GF::rNum_R_1_255_E__6);
+        // GF::printBufferF ("Original:", sat.hPtrIn, width, height, 3);
 
         sat.write ();  // Copy data to device
 
         sat.run ();  // Execute kernels (~ 85 us)
         
         cl_float *results = (cl_float *) sat.read ();  // Copy results to host
-        // printBufferF ("Received:", results, height, width, 5);
+        // GF::printBufferF ("Received:", results, height, width, 5);
 
         // Produce reference SAT array
         cl_float refTmp[width * height], refSAT[width * height];
-        cpuSAT (sat.hPtrIn, refTmp, width, height);
-        cpuTranspose (refTmp, refSAT, width, height);
-        // printBufferF ("Expected:", refSAT, height, width, 5);
+        GF::cpuSAT (sat.hPtrIn, refTmp, width, height);
+        GF::cpuTranspose (refTmp, refSAT, width, height);
+        // GF::printBufferF ("Expected:", refSAT, height, width, 5);
 
         // Verify SAT output
         float eps = 420 * std::numeric_limits<float>::epsilon ();  // 5.00679e-05
@@ -279,8 +282,8 @@ TEST (BoxFilter, sat)
             for (int i = 0; i < nRepeat; ++i)
             {
                 cTimer.start ();
-                cpuSAT (sat.hPtrIn, refTmp, width, height);
-                cpuTranspose(refTmp, refSAT, width, height);
+                GF::cpuSAT (sat.hPtrIn, refTmp, width, height);
+                GF::cpuTranspose(refTmp, refSAT, width, height);
                 pCPU[i] = cTimer.stop ();
             }
             
@@ -332,20 +335,20 @@ TEST (BoxFilter, boxFilterSAT)
         box.init (width, height, filterRadius);
 
         // Initialize data (writes on staging buffer directly)
-        std::generate (box.hPtrIn, box.hPtrIn + bufferSize / sizeof (cl_float), rNum_R_0_1);
-        // printBufferF ("Original:", box.hPtrIn, width, height, 5);
+        std::generate (box.hPtrIn, box.hPtrIn + bufferSize / sizeof (cl_float), GF::rNum_R_0_1);
+        // GF::printBufferF ("Original:", box.hPtrIn, width, height, 5);
 
         box.write ();  // Copy data to device
 
         box.run ();  // Execute kernels (~ 131 us)
         
         cl_float *results = (cl_float *) box.read ();  // Copy results to host
-        // printBufferF ("Received:", results, width, height, 5);
+        // GF::printBufferF ("Received:", results, width, height, 5);
 
         // Produce reference blurred array
         cl_float refBox[width * height];
-        cpuBoxFilter (box.hPtrIn, refBox, width, height, filterRadius);
-        // printBufferF ("Expected:", refBox, width, height, 5);
+        GF::cpuBoxFilter (box.hPtrIn, refBox, width, height, filterRadius);
+        // GF::printBufferF ("Expected:", refBox, width, height, 5);
 
         // Verify blurred output (~ 0.0009 error)
         float eps = 42000 * std::numeric_limits<float>::epsilon ();  // 0.00500679
@@ -364,7 +367,7 @@ TEST (BoxFilter, boxFilterSAT)
             for (int i = 0; i < nRepeat; ++i)
             {
                 cTimer.start ();
-                cpuBoxFilter (box.hPtrIn, refBox, width, height, filterRadius);
+                GF::cpuBoxFilter (box.hPtrIn, refBox, width, height, filterRadius);
                 pCPU[i] = cTimer.stop ();
             }
             
@@ -412,20 +415,20 @@ TEST (BoxFilter, boxFilter)
         box.init (width, height, filterRadius);
 
         // Initialize data (writes on staging buffer directly)
-        std::generate (box.hPtrIn, box.hPtrIn + bufferSize / sizeof (cl_float), rNum_R_0_1);
-        // printBufferF ("Original:", box.hPtrIn, width, height, 3);
+        std::generate (box.hPtrIn, box.hPtrIn + bufferSize / sizeof (cl_float), GF::rNum_R_0_1);
+        // GF::printBufferF ("Original:", box.hPtrIn, width, height, 3);
 
         box.write ();  // Copy data to device
 
         box.run ();  // Execute kernels (~ 249 us)
         
         cl_float *results = (cl_float *) box.read ();  // Copy results to host
-        // printBufferF ("Received:", results, width, height, 5);
+        // GF::printBufferF ("Received:", results, width, height, 5);
 
         // Produce reference blurred array
         cl_float refBox[width * height];
-        cpuBoxFilter (box.hPtrIn, refBox, width, height, filterRadius);
-        // printBufferF ("Expected:", refBox, width, height, 5);
+        GF::cpuBoxFilter (box.hPtrIn, refBox, width, height, filterRadius);
+        // GF::printBufferF ("Expected:", refBox, width, height, 5);
 
         // Verify blurred output
         float eps = 420 * std::numeric_limits<float>::epsilon ();  // 5.00679e-05
@@ -444,7 +447,7 @@ TEST (BoxFilter, boxFilter)
             for (int i = 0; i < nRepeat; ++i)
             {
                 cTimer.start ();
-                cpuBoxFilter (box.hPtrIn, refBox, width, height, filterRadius);
+                GF::cpuBoxFilter (box.hPtrIn, refBox, width, height, filterRadius);
                 pCPU[i] = cTimer.stop ();
             }
             
@@ -471,7 +474,7 @@ TEST (BoxFilter, boxFilter)
 
 int main (int argc, char **argv)
 {
-    profiling = setProfilingFlag (argc, argv);
+    profiling = GF::setProfilingFlag (argc, argv);
 
     ::testing::InitGoogleTest (&argc, argv);
 

@@ -41,15 +41,18 @@
 #include <gtest/gtest.h>
 #include <CLUtils.hpp>
 #include <GuidedFilter/math.hpp>
-#include <GuidedFilter/tests/helperFuncs.hpp>
+#include <GuidedFilter/tests/helper_funcs.hpp>
 
 
 // Kernel filenames
 const std::string kernel_filename_math { "kernels/math_kernels.cl" };
 
-// Uniform random number generators
-extern std::function<unsigned char ()> rNum_0_255;
-extern std::function<unsigned short ()> rNum_0_10000;
+namespace GF
+{
+    // Uniform random number generators
+    extern std::function<unsigned char ()> rNum_0_255;
+    extern std::function<unsigned short ()> rNum_0_10000;
+}
 
 bool profiling;  // Flag to enable profiling of the kernels
 
@@ -76,10 +79,10 @@ TEST (Math, mult)
         mult.init (width, height);
 
         // Initialize data (writes on staging buffer directly)
-        std::generate (mult.hPtrInA, mult.hPtrInA + bufferSize / sizeof (cl_float), rNum_0_255);
-        std::generate (mult.hPtrInB, mult.hPtrInB + bufferSize / sizeof (cl_float), rNum_0_255);
-        // printBufferF ("Original A:", mult.hPtrInA, width, height, 0);
-        // printBufferF ("Original B:", mult.hPtrInB, width, height, 0);
+        std::generate (mult.hPtrInA, mult.hPtrInA + bufferSize / sizeof (cl_float), GF::rNum_0_255);
+        std::generate (mult.hPtrInB, mult.hPtrInB + bufferSize / sizeof (cl_float), GF::rNum_0_255);
+        // GF::printBufferF ("Original A:", mult.hPtrInA, width, height, 0);
+        // GF::printBufferF ("Original B:", mult.hPtrInB, width, height, 0);
 
         // Copy data to device
         mult.write (cl_algo::GF::Math::Mult::Memory::D_IN_A);
@@ -88,12 +91,12 @@ TEST (Math, mult)
         mult.run ();  // Execute kernels (26 us)
         
         cl_float *results = (cl_float *) mult.read ();  // Copy results to host
-        // printBufferF ("Received:", results, width, height, 1);
+        // GF::printBufferF ("Received:", results, width, height, 1);
 
         // Produce reference blurred array
         cl_float refMult[width * height];
-        cpuMult (mult.hPtrInA, mult.hPtrInB, refMult, width, height);
-        // printBufferF ("Expected:", refMult, width, height, 1);
+        GF::cpuMult (mult.hPtrInA, mult.hPtrInB, refMult, width, height);
+        // GF::printBufferF ("Expected:", refMult, width, height, 1);
 
         // Verify blurred output
         float eps = std::numeric_limits<float>::epsilon ();  // 1.19209e-07
@@ -112,7 +115,7 @@ TEST (Math, mult)
             for (int i = 0; i < nRepeat; ++i)
             {
                 cTimer.start ();
-                cpuMult (mult.hPtrInA, mult.hPtrInB, refMult, width, height);
+                GF::cpuMult (mult.hPtrInA, mult.hPtrInB, refMult, width, height);
                 pCPU[i] = cTimer.stop ();
             }
             
@@ -160,20 +163,20 @@ TEST (Math, pown)
         pown.init (width, height, power);
 
         // Initialize data (writes on staging buffer directly)
-        std::generate (pown.hPtrIn, pown.hPtrIn + bufferSize / sizeof (cl_float), rNum_0_255);
-        // printBufferF ("Original:", pown.hPtrIn, width, height, 0);
+        std::generate (pown.hPtrIn, pown.hPtrIn + bufferSize / sizeof (cl_float), GF::rNum_0_255);
+        // GF::printBufferF ("Original:", pown.hPtrIn, width, height, 0);
 
         pown.write ();  // Copy data to device
 
         pown.run ();  // Execute kernels (59 us)
         
         cl_float *results = (cl_float *) pown.read ();  // Copy results to host
-        // printBufferF ("Received:", results, width, height, 1);
+        // GF::printBufferF ("Received:", results, width, height, 1);
 
         // Produce reference blurred array
         cl_float refPow[width * height];
-        cpuPown (pown.hPtrIn, refPow, width, height, power);
-        // printBufferF ("Expected:", refPow, width, height, 1);
+        GF::cpuPown (pown.hPtrIn, refPow, width, height, power);
+        // GF::printBufferF ("Expected:", refPow, width, height, 1);
 
         // Verify blurred output
         float eps = std::numeric_limits<float>::epsilon ();  // 1.19209e-07
@@ -192,7 +195,7 @@ TEST (Math, pown)
             for (int i = 0; i < nRepeat; ++i)
             {
                 cTimer.start ();
-                cpuPown (pown.hPtrIn, refPow, width, height, power);
+                GF::cpuPown (pown.hPtrIn, refPow, width, height, power);
                 pCPU[i] = cTimer.stop ();
             }
             
@@ -219,7 +222,7 @@ TEST (Math, pown)
 
 int main (int argc, char **argv)
 {
-    profiling = setProfilingFlag (argc, argv);
+    profiling = GF::setProfilingFlag (argc, argv);
 
     ::testing::InitGoogleTest (&argc, argv);
 

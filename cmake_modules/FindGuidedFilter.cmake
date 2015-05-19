@@ -8,7 +8,8 @@
 
 find_path ( 
     GuidedFilter_INCLUDE_DIR
-    NAMES algorithms.hpp common.hpp math.hpp tests/helperFuncs.hpp 
+    NAMES GuidedFilter/common.hpp GuidedFilter/math.hpp 
+          GuidedFilter/algorithms.hpp GuidedFilter/tests/helper_funcs.hpp 
     HINTS ${GuidedFilter_ROOT}/include 
           /usr/include
           /usr/local/include 
@@ -16,12 +17,30 @@ find_path (
 )
 
 find_library ( 
-    GuidedFilter_LIBRARY 
-    NAMES GFAlgorithms GFMath GFHelperFuncs  
+    GuidedFilter_LIB_ALGORITHMS 
+    NAMES GFAlgorithms 
     PATHS ${GuidedFilter_ROOT}/build/lib 
-          /usr/lib 
-          /usr/local/lib 
-    DOC "The directory where GuidedFilter libraries reside"
+          /usr/lib/GuidedFilter 
+          /usr/local/lib/GuidedFilter 
+    DOC "The Guided Filter algorithms library"
+)
+
+find_library ( 
+    GuidedFilter_LIB_MATH 
+    NAMES GFMath 
+    PATHS ${GuidedFilter_ROOT}/build/lib 
+          /usr/lib/GuidedFilter 
+          /usr/local/lib/GuidedFilter 
+    DOC "The Guided Filter math library"
+)
+
+find_library ( 
+    GuidedFilter_LIB_HELPERFUNCS 
+    NAMES GFHelperFuncs 
+    PATHS ${GuidedFilter_ROOT}/build/lib 
+          /usr/lib/GuidedFilter 
+          /usr/local/lib/GuidedFilter 
+    DOC "The Guided Filter helper functions library"
 )
 
 include ( FindPackageHandleStandardArgs )
@@ -29,16 +48,26 @@ include ( FindPackageHandleStandardArgs )
 find_package_handle_standard_args ( 
     GuidedFilter 
     FOUND_VAR GuidedFilter_FOUND
-    REQUIRED_VARS GuidedFilter_INCLUDE_DIR GuidedFilter_LIBRARY 
+    REQUIRED_VARS GuidedFilter_INCLUDE_DIR 
+                  GuidedFilter_LIB_ALGORITHMS 
+                  GuidedFilter_LIB_MATH 
+                  GuidedFilter_LIB_HELPERFUNCS 
 )
 
 if ( GuidedFilter_FOUND )
-    set ( GuidedFilter_LIBRARIES ${GuidedFilter_LIBRARY} )
+    set ( 
+        GuidedFilter_LIBRARIES 
+        ${GuidedFilter_LIB_ALGORITHMS} 
+        ${GuidedFilter_LIB_MATH} 
+        ${GuidedFilter_LIB_HELPERFUNCS} 
+    )
 else ( GuidedFilter_FOUND )
     set ( GuidedFilter_LIBRARIES )
 endif ( GuidedFilter_FOUND )
 
 mark_as_advanced ( 
     GuidedFilter_INCLUDE_DIR
-    GuidedFilter_LIBRARY
+    GuidedFilter_LIB_ALGORITHMS 
+    GuidedFilter_LIB_MATH 
+    GuidedFilter_LIB_HELPERFUNCS 
 )
