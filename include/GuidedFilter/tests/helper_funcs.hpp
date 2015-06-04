@@ -1,7 +1,7 @@
 /*! \file helper_funcs.hpp
  *  \brief Declarations of helper functions for testing.
  *  \author Nick Lamprianidis
- *  \version 1.1.1
+ *  \version 1.1.2
  *  \date 2015
  *  \copyright The MIT License (MIT)
  *  \par
@@ -26,8 +26,8 @@
  *  THE SOFTWARE.
  */
 
-#ifndef HELPERFUNCS_HPP
-#define HELPERFUNCS_HPP
+#ifndef GF_HELPERFUNCS_HPP
+#define GF_HELPERFUNCS_HPP
 
 #include <cassert>
 
@@ -492,4 +492,4 @@ namespace GF
 
 }
 
-#endif  // HELPERFUNCS_HPP
+#endif  // GF_HELPERFUNCS_HPP

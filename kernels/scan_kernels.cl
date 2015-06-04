@@ -65,8 +65,8 @@
  *  \param[in] scaling factor by which to scale the array elements before processing.
  */
 kernel
-void scan (global float4 *in, global float4 *out, local float *data, 
-                global float *sums, uint n, float scaling)
+void inclusveScan_f (global float4 *in, global float4 *out, local float *data, 
+                     global float *sums, uint n, float scaling)
 {
     // Workspace dimensions
     uint lXdim = get_local_size (0);
@@ -167,7 +167,7 @@ void scan (global float4 *in, global float4 *out, local float *data,
  *  \param[in] n the number of elements in a row of the array divided by 4.
  */
 kernel
-void addGroupSums (global float *sums, global float4 *out, uint n)
+void addGroupSums_f (global float *sums, global float4 *out, uint n)
 {
     // Workspace dimensions
     uint wgXdim = get_num_groups (0);

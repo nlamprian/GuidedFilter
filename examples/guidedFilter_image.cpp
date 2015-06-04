@@ -6,7 +6,7 @@
  *           channels separately, and displays the original and filtered 
  *           images on the screen.
  *  \author Nick Lamprianidis
- *  \version 1.1.1
+ *  \version 1.1.2
  *  \date 2015
  *  \copyright The MIT License (MIT)
  *  \par

@@ -4,7 +4,7 @@
  *           initialize the necessary buffers, set up the workspaces, 
  *           and run the kernels.
  *  \author Nick Lamprianidis
- *  \version 1.1.1
+ *  \version 1.1.2
  *  \date 2015
  *  \copyright The MIT License (MIT)
  *  \par
@@ -29,8 +29,8 @@
  *  THE SOFTWARE.
  */
 
-#ifndef ALGORITHMS_HPP
-#define ALGORITHMS_HPP
+#ifndef GF_ALGORITHMS_HPP
+#define GF_ALGORITHMS_HPP
 
 #include <CLUtils.hpp>
 #include <GuidedFilter/common.hpp>
@@ -42,17 +42,17 @@
  */
 namespace cl_algo
 {
+/*! \brief Offers classes associated with the Guided Filter algorithm.
+ */
 namespace GF
 {
 
-    /*! \brief Enumerates configurations for the `SeparateRGB` class.
-     * 
-     *  \param FLOAT_FLOAT identifies the case of `float` input data and 
-     *                     `float` output data.
-     *  \param UCHAR_FLOAT identifies the case of `uchar` input data and 
-     *                     `float` output data.
-     */
-    enum class SeparateRGBConfig : uint8_t { FLOAT_FLOAT, UCHAR_FLOAT };
+    /*! \brief Enumerates configurations for the `SeparateRGB` class. */
+    enum class SeparateRGBConfig : uint8_t
+    {
+        FLOAT_FLOAT,  /*!< Identifies the case of `float` input data and `float` output data. */
+        UCHAR_FLOAT   /*!< Identifies the case of `uchar` input data and `float` output data. */
+    };
 
 
     /*! \brief Interface class for the `separateRGBChannels` kernels.
@@ -102,17 +102,18 @@ namespace GF
         /*! \brief Enumerates the memory objects handled by the class.
          *  \note `H_*` names refer to staging buffers on the host.
          *  \note `D_*` names refer to buffers on the device.
-         *  
-         *  \param H_IN input staging buffer.
-         *  \param H_OUT_R output staging buffer for channel R.
-         *  \param H_OUT_G output staging buffer for channel G.
-         *  \param H_OUT_B output staging buffer for channel B.
-         *  \param D_IN input buffer.
-         *  \param D_OUT_R output buffer for channel R.
-         *  \param D_OUT_G output buffer for channel G.
-         *  \param D_OUT_B output buffer for channel B.
          */
-        enum class Memory : uint8_t { H_IN, H_OUT_R, H_OUT_G, H_OUT_B, D_IN, D_OUT_R, D_OUT_G, D_OUT_B };
+        enum class Memory : uint8_t
+        {
+            H_IN,     /*!< Input staging buffer. */
+            H_OUT_R,  /*!< Output staging buffer for channel R. */
+            H_OUT_G,  /*!< Output staging buffer for channel G. */
+            H_OUT_B,  /*!< Output staging buffer for channel B. */
+            D_IN,     /*!< Input buffer. */
+            D_OUT_R,  /*!< Output buffer for channel R. */
+            D_OUT_G,  /*!< Output buffer for channel G. */
+            D_OUT_B   /*!< Output buffer for channel B. */
+        };
 
         /*! \brief Configures an OpenCL environment as specified by `_info`. */
         SeparateRGB (clutils::CLEnv &_env, clutils::CLEnvInfo<1> _info);
@@ -203,17 +204,18 @@ namespace GF
         /*! \brief Enumerates the memory objects handled by the class.
          *  \note `H_*` names refer to staging buffers on the host.
          *  \note `D_*` names refer to buffers on the device.
-         *  
-         *  \param H_IN input staging buffer.
-         *  \param H_OUT_R output staging buffer for channel R.
-         *  \param H_OUT_G output staging buffer for channel G.
-         *  \param H_OUT_B output staging buffer for channel B.
-         *  \param D_IN input buffer.
-         *  \param D_OUT_R output buffer for channel R.
-         *  \param D_OUT_G output buffer for channel G.
-         *  \param D_OUT_B output buffer for channel B.
          */
-        enum class Memory : uint8_t { H_IN, H_OUT_R, H_OUT_G, H_OUT_B, D_IN, D_OUT_R, D_OUT_G, D_OUT_B };
+        enum class Memory : uint8_t
+        {
+            H_IN,     /*!< Input staging buffer. */
+            H_OUT_R,  /*!< Output staging buffer for channel R. */
+            H_OUT_G,  /*!< Output staging buffer for channel G. */
+            H_OUT_B,  /*!< Output staging buffer for channel B. */
+            D_IN,     /*!< Input buffer. */
+            D_OUT_R,  /*!< Output buffer for channel R. */
+            D_OUT_G,  /*!< Output buffer for channel G. */
+            D_OUT_B   /*!< Output buffer for channel B. */
+        };
 
         /*! \brief Configures an OpenCL environment as specified by `_info`. */
         SeparateRGB (clutils::CLEnv &_env, clutils::CLEnvInfo<1> _info);
@@ -269,14 +271,12 @@ namespace GF
     };
 
 
-    /*! \brief Enumerates configurations for the `CombineRGB` class.
-     * 
-     *  \param FLOAT_FLOAT identifies the case of `float` input data and 
-     *                     `float` output data.
-     *  \param FLOAT_UCHAR identifies the case of `float` input data and 
-     *                     `uchar` output data.
-     */
-    enum class CombineRGBConfig : uint8_t { FLOAT_FLOAT, FLOAT_UCHAR };
+    /*! \brief Enumerates configurations for the `CombineRGB` class. */
+    enum class CombineRGBConfig : uint8_t
+    {
+        FLOAT_FLOAT,  /*!< Identifies the case of `float` input data and `float` output data. */
+        FLOAT_UCHAR   /*!< Identifies the case of `float` input data and `uchar` output data. */
+    };
 
 
     /*! \brief Interface class for the `combineRGBChannels` kernels.
@@ -325,17 +325,18 @@ namespace GF
         /*! \brief Enumerates the memory objects handled by the class.
          *  \note `H_*` names refer to staging buffers on the host.
          *  \note `D_*` names refer to buffers on the device.
-         *  
-         *  \param H_IN_R input staging buffer for channel R.
-         *  \param H_IN_G input staging buffer for channel G.
-         *  \param H_IN_B input staging buffer for channel B.
-         *  \param H_OUT output staging buffer.
-         *  \param D_IN_R input buffer for channel R.
-         *  \param D_IN_G input buffer for channel G.
-         *  \param D_IN_B input buffer for channel B.
-         *  \param D_OUT output buffer.
          */
-        enum class Memory : uint8_t { H_IN_R, H_IN_G, H_IN_B, H_OUT, D_IN_R, D_IN_G, D_IN_B, D_OUT };
+        enum class Memory : uint8_t
+        {
+            H_IN_R,  /*!< Input staging buffer for channel R. */
+            H_IN_G,  /*!< Input staging buffer for channel G. */
+            H_IN_B,  /*!< Input staging buffer for channel B. */
+            H_OUT,   /*!< Output staging buffer. */
+            D_IN_R,  /*!< Input buffer for channel R. */
+            D_IN_G,  /*!< Input buffer for channel G. */
+            D_IN_B,  /*!< Input buffer for channel B. */
+            D_OUT    /*!< Output buffer. */
+        };
 
         /*! \brief Configures an OpenCL environment as specified by `_info`. */
         CombineRGB (clutils::CLEnv &_env, clutils::CLEnvInfo<1> _info);
@@ -426,17 +427,18 @@ namespace GF
         /*! \brief Enumerates the memory objects handled by the class.
          *  \note `H_*` names refer to staging buffers on the host.
          *  \note `D_*` names refer to buffers on the device.
-         *  
-         *  \param H_IN_R input staging buffer for channel R.
-         *  \param H_IN_G input staging buffer for channel G.
-         *  \param H_IN_B input staging buffer for channel B.
-         *  \param H_OUT output staging buffer.
-         *  \param D_IN_R input buffer for channel R.
-         *  \param D_IN_G input buffer for channel G.
-         *  \param D_IN_B input buffer for channel B.
-         *  \param D_OUT output buffer.
          */
-        enum class Memory : uint8_t { H_IN_R, H_IN_G, H_IN_B, H_OUT, D_IN_R, D_IN_G, D_IN_B, D_OUT };
+        enum class Memory : uint8_t
+        {
+            H_IN_R,  /*!< Input staging buffer for channel R. */
+            H_IN_G,  /*!< Input staging buffer for channel G. */
+            H_IN_B,  /*!< Input staging buffer for channel B. */
+            H_OUT,   /*!< Output staging buffer. */
+            D_IN_R,  /*!< Input buffer for channel R. */
+            D_IN_G,  /*!< Input buffer for channel G. */
+            D_IN_B,  /*!< Input buffer for channel B. */
+            D_OUT    /*!< Output buffer. */
+        };
 
         /*! \brief Configures an OpenCL environment as specified by `_info`. */
         CombineRGB (clutils::CLEnv &_env, clutils::CLEnvInfo<1> _info);
@@ -493,12 +495,11 @@ namespace GF
     };
 
 
-    /*! \brief Enumerates configurations for the `Depth` class.
-     * 
-     *  \param USHORT_FLOAT identifies the case of `ushort` input data 
-     *                      and `float` output data.
-     */
-    enum class DepthConfig : uint8_t { USHORT_FLOAT };
+    /*! \brief Enumerates configurations for the `Depth` class. */
+    enum class DepthConfig : uint8_t
+    {
+        USHORT_FLOAT  /*!< Identifies the case of `ushort` input data and `float` output data. */
+    };
 
 
     /*! \brief Interface class for the `depth` kernels.
@@ -544,13 +545,14 @@ namespace GF
         /*! \brief Enumerates the memory objects handled by the class.
          *  \note `H_*` names refer to staging buffers on the host.
          *  \note `D_*` names refer to buffers on the device.
-         *  
-         *  \param H_IN input staging buffer.
-         *  \param H_OUT output staging buffer.
-         *  \param D_IN input buffer.
-         *  \param D_OUT output buffer.
          */
-        enum class Memory : uint8_t { H_IN, H_OUT, D_IN, D_OUT };
+        enum class Memory : uint8_t
+        {
+            H_IN,   /*!< Input staging buffer. */
+            H_OUT,  /*!< Output staging buffer. */
+            D_IN,   /*!< Input buffer. */
+            D_OUT   /*!< Output buffer. */
+        };
 
         /*! \brief Configures an OpenCL environment as specified by `_info`. */
         Depth (clutils::CLEnv &_env, clutils::CLEnvInfo<1> _info);
@@ -635,13 +637,14 @@ namespace GF
         /*! \brief Enumerates the memory objects handled by the class.
          *  \note `H_*` names refer to staging buffers on the host.
          *  \note `D_*` names refer to buffers on the device.
-         *  
-         *  \param H_IN input staging buffer.
-         *  \param H_OUT output staging buffer.
-         *  \param D_IN input buffer.
-         *  \param D_OUT output buffer.
          */
-        enum class Memory : uint8_t { H_IN, H_OUT, D_IN, D_OUT };
+        enum class Memory : uint8_t
+        {
+            H_IN,   /*!< Input staging buffer. */
+            H_OUT,  /*!< Output staging buffer. */
+            D_IN,   /*!< Input buffer. */
+            D_OUT   /*!< Output buffer. */
+        };
 
         /*! \brief Configures an OpenCL environment as specified by `_info`. */
         DepthTo3D (clutils::CLEnv &_env, clutils::CLEnvInfo<1> _info);
@@ -736,20 +739,20 @@ namespace GF
         /*! \brief Enumerates the memory objects handled by the class.
          *  \note `H_*` names refer to staging buffers on the host.
          *  \note `D_*` names refer to buffers on the device.
-         *  
-         *  \param H_IN_D input staging buffer for the %Depth image.
-         *  \param H_IN_R input staging buffer for channel R of the RGB image.
-         *  \param H_IN_G input staging buffer for channel G of the RGB image.
-         *  \param H_IN_B input staging buffer for channel B of the RGB image.
-         *  \param H_OUT output staging buffer.
-         *  \param D_IN_D input buffer for the %Depth image.
-         *  \param D_IN_R input buffer for channel R of the RGB image.
-         *  \param D_IN_G input buffer for channel G of the RGB image.
-         *  \param D_IN_B input buffer for channel B of the RGB image.
-         *  \param D_OUT output buffer.
          */
-        enum class Memory : uint8_t { H_IN_D, H_IN_R, H_IN_G, H_IN_B, H_OUT, 
-                                      D_IN_D, D_IN_R, D_IN_G, D_IN_B, D_OUT };
+        enum class Memory : uint8_t
+        {
+            H_IN_D,  /*!< Input staging buffer for the %Depth image. */
+            H_IN_R,  /*!< Input staging buffer for channel R of the RGB image. */
+            H_IN_G,  /*!< Input staging buffer for channel G of the RGB image. */
+            H_IN_B,  /*!< Input staging buffer for channel B of the RGB image. */
+            H_OUT,   /*!< Output staging buffer. */
+            D_IN_D,  /*!< Input buffer for the %Depth image. */
+            D_IN_R,  /*!< Input buffer for channel R of the RGB image. */
+            D_IN_G,  /*!< Input buffer for channel G of the RGB image. */
+            D_IN_B,  /*!< Input buffer for channel B of the RGB image. */
+            D_OUT    /*!< Output buffer. */
+        };
 
         /*! \brief Configures an OpenCL environment as specified by `_info`. */
         RGBDTo8D (clutils::CLEnv &_env, clutils::CLEnvInfo<1> _info);
@@ -841,13 +844,14 @@ namespace GF
         /*! \brief Enumerates the memory objects handled by the class.
          *  \note `H_*` names refer to staging buffers on the host.
          *  \note `D_*` names refer to buffers on the device.
-         *  
-         *  \param H_IN input staging buffer.
-         *  \param H_OUT output staging buffer.
-         *  \param D_IN input buffer.
-         *  \param D_OUT output buffer.
          */
-        enum class Memory : uint8_t { H_IN, H_OUT, D_IN, D_OUT };
+        enum class Memory : uint8_t
+        {
+            H_IN,   /*!< Input staging buffer. */
+            H_OUT,  /*!< Output staging buffer. */
+            D_IN,   /*!< Input buffer. */
+            D_OUT   /*!< Output buffer. */
+        };
 
         /*! \brief Configures an OpenCL environment as specified by `_info`. */
         RGBNorm (clutils::CLEnv &_env, clutils::CLEnvInfo<1> _info);
@@ -925,14 +929,15 @@ namespace GF
         /*! \brief Enumerates the memory objects handled by the class.
          *  \note `H_*` names refer to staging buffers on the host.
          *  \note `D_*` names refer to buffers on the device.
-         *  
-         *  \param H_IN input staging buffer.
-         *  \param H_OUT output staging buffer.
-         *  \param D_IN input buffer.
-         *  \param D_SUMS buffer of partial group sums.
-         *  \param D_OUT output buffer.
          */
-        enum class Memory : uint8_t { H_IN, H_OUT, D_IN, D_SUMS, D_OUT };
+        enum class Memory : uint8_t
+        {
+            H_IN,    /*!< Input staging buffer. */
+            H_OUT,   /*!< Output staging buffer. */
+            D_IN,    /*!< Input buffer. */
+            D_SUMS,  /*!< Buffer of partial group sums. */
+            D_OUT    /*!< Output buffer. */
+        };
 
         /*! \brief Configures an OpenCL environment as specified by `_info`. */
         Scan (clutils::CLEnv &_env, clutils::CLEnvInfo<1> _info);
@@ -1041,13 +1046,14 @@ namespace GF
         /*! \brief Enumerates the memory objects handled by the class.
          *  \note `H_*` names refer to staging buffers on the host.
          *  \note `D_*` names refer to buffers on the device.
-         *  
-         *  \param H_IN input staging buffer.
-         *  \param H_OUT output staging buffer.
-         *  \param D_IN input buffer.
-         *  \param D_OUT output buffer.
          */
-        enum class Memory : uint8_t { H_IN, H_OUT, D_IN, D_OUT };
+        enum class Memory : uint8_t
+        {
+            H_IN,   /*!< Input staging buffer. */
+            H_OUT,  /*!< Output staging buffer. */
+            D_IN,   /*!< Input buffer. */
+            D_OUT   /*!< Output buffer. */
+        };
 
         /*! \brief Configures an OpenCL environment as specified by `_info`. */
         Transpose (clutils::CLEnv &_env, clutils::CLEnvInfo<1> _info);
@@ -1126,13 +1132,14 @@ namespace GF
         /*! \brief Enumerates the memory objects handled by the class.
          *  \note `H_*` names refer to staging buffers on the host.
          *  \note `D_*` names refer to buffers on the device.
-         *  
-         *  \param H_IN input staging buffer.
-         *  \param H_OUT output staging buffer.
-         *  \param D_IN input buffer.
-         *  \param D_OUT output buffer.
          */
-        enum class Memory : uint8_t { H_IN, H_OUT, D_IN, D_OUT };
+        enum class Memory : uint8_t
+        {
+            H_IN,   /*!< Input staging buffer. */
+            H_OUT,  /*!< Output staging buffer. */
+            D_IN,   /*!< Input buffer. */
+            D_OUT   /*!< Output buffer. */
+        };
 
         /*! \brief Configures an OpenCL environment as specified by `_info`. */
         SAT (clutils::CLEnv &_env, clutils::CLEnvInfo<1> _info, bool _transposed = true);
@@ -1210,9 +1217,9 @@ namespace GF
      *        The following input/output `OpenCL` memory objects are created by a `BoxFilterSAT` instance:<br>
      *        | Name | Type | Placement | I/O | Use | Properties | Size |
      *        | ---  |:---: |   :---:   |:---:|:---:|   :---:    |:---: |
-     *        | H_IN | Buffer | Host   | I | Staging     | CL_MEM_READ_WRITE | \f$width*height*sizeof\ (cl\_float)\f$   |
+     *        | H_IN | Buffer | Host   | I | Staging     | CL_MEM_READ_WRITE | \f$width*height*sizeof\ (cl\_float)\f$ |
      *        | H_OUT| Buffer | Host   | O | Staging     | CL_MEM_READ_WRITE | \f$width*height*sizeof\ (cl\_float)\f$ |
-     *        | D_IN | Buffer | Device | I | Processing  | CL_MEM_READ_ONLY  | \f$width*height*sizeof\ (cl\_float)\f$   |
+     *        | D_IN | Buffer | Device | I | Processing  | CL_MEM_READ_ONLY  | \f$width*height*sizeof\ (cl\_float)\f$ |
      *        | D_OUT| Buffer | Device | O | Processing  | CL_MEM_WRITE_ONLY | \f$width*height*sizeof\ (cl\_float)\f$ |
      */
     class BoxFilterSAT
@@ -1221,13 +1228,14 @@ namespace GF
         /*! \brief Enumerates the memory objects handled by the class.
          *  \note `H_*` names refer to staging buffers on the host.
          *  \note `D_*` names refer to buffers on the device.
-         *  
-         *  \param H_IN input staging buffer.
-         *  \param H_OUT output staging buffer.
-         *  \param D_IN input buffer.
-         *  \param D_OUT output buffer.
          */
-        enum class Memory : uint8_t { H_IN, H_OUT, D_IN, D_OUT };
+        enum class Memory : uint8_t
+        {
+            H_IN,   /*!< Input staging buffer. */
+            H_OUT,  /*!< Output staging buffer. */
+            D_IN,   /*!< Input buffer. */
+            D_OUT   /*!< Output buffer. */
+        };
 
         /*! \brief Configures an OpenCL environment as specified by `_info`. */
         BoxFilterSAT (clutils::CLEnv &_env, clutils::CLEnvInfo<1> _info);
@@ -1313,9 +1321,9 @@ namespace GF
      *        The following input/output `OpenCL` memory objects are created by a `BoxFilter` instance:<br>
      *        | Name | Type | Placement | I/O | Use | Properties | Size |
      *        | ---  |:---: |   :---:   |:---:|:---:|   :---:    |:---: |
-     *        | H_IN | Buffer | Host   | I | Staging     | CL_MEM_READ_WRITE | \f$width*height*sizeof\ (cl\_float)\f$   |
+     *        | H_IN | Buffer | Host   | I | Staging     | CL_MEM_READ_WRITE | \f$width*height*sizeof\ (cl\_float)\f$ |
      *        | H_OUT| Buffer | Host   | O | Staging     | CL_MEM_READ_WRITE | \f$width*height*sizeof\ (cl\_float)\f$ |
-     *        | D_IN | Buffer | Device | I | Processing  | CL_MEM_READ_ONLY  | \f$width*height*sizeof\ (cl\_float)\f$   |
+     *        | D_IN | Buffer | Device | I | Processing  | CL_MEM_READ_ONLY  | \f$width*height*sizeof\ (cl\_float)\f$ |
      *        | D_OUT| Buffer | Device | O | Processing  | CL_MEM_WRITE_ONLY | \f$width*height*sizeof\ (cl\_float)\f$ |
      */
     class BoxFilter
@@ -1324,13 +1332,14 @@ namespace GF
         /*! \brief Enumerates the memory objects handled by the class.
          *  \note `H_*` names refer to staging buffers on the host.
          *  \note `D_*` names refer to buffers on the device.
-         *  
-         *  \param H_IN input staging buffer.
-         *  \param H_OUT output staging buffer.
-         *  \param D_IN input buffer.
-         *  \param D_OUT output buffer.
          */
-        enum class Memory : uint8_t { H_IN, H_OUT, D_IN, D_OUT };
+        enum class Memory : uint8_t
+        {
+            H_IN,   /*!< Input staging buffer. */
+            H_OUT,  /*!< Output staging buffer. */
+            D_IN,   /*!< Input buffer. */
+            D_OUT   /*!< Output buffer. */
+        };
 
         /*! \brief Configures an OpenCL environment as specified by `_info`. */
         BoxFilter (clutils::CLEnv &_env, clutils::CLEnvInfo<1> _info);
@@ -1390,12 +1399,12 @@ namespace GF
     };
 
 
-    /*! \brief Enumerates configurations for the `Guided Filter` algorithm.
-     * 
-     *  \param I_NEQ_P identifies the general case where \f$ I \neq p \f$.
-     *  \param I_EQ_P identifies the special case where \f$ I = p \f$.
-     */
-    enum class GuidedFilterConfig : uint8_t { I_NEQ_P, I_EQ_P };
+    /*! \brief Enumerates configurations for the `Guided Filter` algorithm. */
+    enum class GuidedFilterConfig : uint8_t
+    {
+        I_NEQ_P,  /*!< Identifies the general case where \f$ I \neq p \f$. */
+        I_EQ_P    /*!< Identifies the special case where \f$ I == p \f$. */
+    };
 
 
     /*! \brief Interface class for the `Guided Filter` algorithm.
@@ -1408,14 +1417,14 @@ namespace GF
      *        for specific instantiations of the class.
      *        
      *  \tparam Ip enables one of the two cases of `Guided Filter` algorithm, 
-     *             \f$ I \neq p\ \f$ or \f$\ I = p \f$.
+     *             \f$ I \neq p\ \f$ or \f$\ I == p \f$.
      */
     template <GuidedFilterConfig Ip>
     class GuidedFilter;
 
 
     /*! \brief Interface class for the `Guided Filter` pipeline.
-     *  \details This instantiation covers the case where \f$ I = p \f$.
+     *  \details This instantiation covers the case where \f$ I == p \f$.
      *  \note The kernels, specific to the `Guided Filter` algorithm, 
      *        are available in `kernels/guidedFilter_kernels.cl`.
      *  \note The class creates its own buffers. If you would like to provide 
@@ -1442,15 +1451,16 @@ namespace GF
         /*! \brief Enumerates the memory objects handled by the class.
          *  \note `H_*` names refer to staging buffers on the host.
          *  \note `D_*` names refer to buffers on the device.
-         *  
-         *  \param H_IN input staging buffer.
-         *  \param H_OUT output staging buffer.
-         *  \param D_IN input buffer.
-         *  \param D_OUT output buffer.
-         *  \param D_A buffer of \f$ a \f$ coefficients.
-         *  \param D_B buffer of \f$ b \f$ coefficients.
          */
-        enum class Memory : uint8_t { H_IN, H_OUT, D_IN, D_OUT, D_A, D_B };
+        enum class Memory : uint8_t
+        {
+            H_IN,   /*!< Input staging buffer. */
+            H_OUT,  /*!< Output staging buffer. */
+            D_IN,   /*!< Input buffer. */
+            D_OUT,  /*!< Output buffer. */
+            D_A,    /*!< Buffer of \f$ a \f$ coefficients. */
+            D_B     /*!< Buffer of \f$ b \f$ coefficients. */
+        };
 
         /*! \brief Configures an OpenCL environment as specified by `_info`. */
         GuidedFilter (clutils::CLEnv &_env, clutils::CLEnvInfo<2> _info);
@@ -1578,18 +1588,20 @@ namespace GF
         /*! \brief Enumerates the memory objects handled by the class.
          *  \note `H_*` names refer to staging buffers on the host.
          *  \note `D_*` names refer to buffers on the device.
-         *  
-         *  \param H_IN_I input staging buffer for the guidance image.
-         *  \param H_IN_P input staging buffer for the input image.
-         *  \param H_OUT output staging buffer.
-         *  \param D_IN_I input buffer for the guidance image.
-         *  \param D_IN_P input buffer for the input image.
-         *  \param D_OUT output buffer.
-         *  \param D_A buffer of \f$ a \f$ coefficients.
-         *  \param D_B buffer of \f$ b \f$ coefficients.
          */
-        enum class Memory : uint8_t { H_IN_I, H_IN_P, H_OUT, D_IN_I, D_IN_P, D_OUT, 
-                                      D_VAR_I, D_COV_IP, D_A, D_B };
+        enum class Memory : uint8_t
+        {
+            H_IN_I,    /*!< Input staging buffer for the guidance image. */
+            H_IN_P,    /*!< Input staging buffer for the input image. */
+            H_OUT,     /*!< Output staging buffer. */
+            D_IN_I,    /*!< Input buffer for the guidance image. */
+            D_IN_P,    /*!< Input buffer for the input image. */
+            D_OUT,     /*!< Output buffer. */
+            D_VAR_I,   /*!< Buffer of variance values for the guidance image. */
+            D_COV_IP,  /*!< Buffer of covariance values between the guidance and input images. */
+            D_A,       /*!< Buffer of \f$ a \f$ coefficients. */
+            D_B        /*!< Buffer of \f$ b \f$ coefficients. */
+        };
 
         /*! \brief Configures an OpenCL environment as specified by `_info`. */
         GuidedFilter (clutils::CLEnv &_env, clutils::CLEnvInfo<2> _info);
@@ -1702,14 +1714,12 @@ namespace GF
     namespace Kinect
     {
 
-        /*! \brief Enumerates configurations for the `GuidedFilterRGB` class.
-         * 
-         *  \param INTERLEAVED identifies the case where the output channels 
-         *                     are mixed together in an RGB image of type `float`.
-         *  \param SEPARATED identifies the case where the output channels
-         *                   are left separated in independent images.
-         */
-        enum class GuidedFilterRGBConfig : uint8_t { INTERLEAVED_FLOAT, SEPARATED };
+        /*! \brief Enumerates configurations for the `GuidedFilterRGB` class. */
+        enum class GuidedFilterRGBConfig : uint8_t
+        {
+            INTERLEAVED_FLOAT,  /*!< Identifies the case where the output channels are mixed together in an RGB image of type `float`. */
+            SEPARATED           /*!< Identifies the case where the output channels are left separated in independent images. */
+        };
 
 
         /*! \brief Interface class for performing `Guided Image Filtering` on an RGB image from `%Kinect`.
@@ -1740,14 +1750,14 @@ namespace GF
          *        a `GuidedFilterRGB<GuidedFilterRGBConfig::SEPARATED>` instance:<br>
          *        |  Name  | Type | Placement | I/O | Use | Properties | Size |
          *        |  ---   |:---: |   :---:   |:---:|:---:|   :---:    |:---: |
-         *        | H_IN   | Buffer | Host   | I | Staging     | CL_MEM_READ_WRITE | \f$width*height*sizeof\ (cl\_uchar)\f$ |
-         *        | H_OUT_R| Buffer | Host   | O | Staging     | CL_MEM_READ_WRITE | \f$width*height*sizeof\ (cl\_float)\f$ |
-         *        | H_OUT_G| Buffer | Host   | O | Staging     | CL_MEM_READ_WRITE | \f$width*height*sizeof\ (cl\_float)\f$ |
-         *        | H_OUT_B| Buffer | Host   | O | Staging     | CL_MEM_READ_WRITE | \f$width*height*sizeof\ (cl\_float)\f$ |
-         *        | D_IN   | Buffer | Device | I | Processing  | CL_MEM_READ_ONLY  | \f$width*height*sizeof\ (cl\_uchar)\f$ |
-         *        | D_OUT_R| Buffer | Device | O | Processing  | CL_MEM_WRITE_ONLY | \f$width*height*sizeof\ (cl\_float)\f$ |
-         *        | D_OUT_G| Buffer | Device | O | Processing  | CL_MEM_WRITE_ONLY | \f$width*height*sizeof\ (cl\_float)\f$ |
-         *        | D_OUT_B| Buffer | Device | O | Processing  | CL_MEM_WRITE_ONLY | \f$width*height*sizeof\ (cl\_float)\f$ |
+         *        | H_IN   | Buffer | Host   | I | Staging     | CL_MEM_READ_WRITE | \f$3*width*height*sizeof\ (cl\_uchar)\f$ |
+         *        | H_OUT_R| Buffer | Host   | O | Staging     | CL_MEM_READ_WRITE | \f$  width*height*sizeof\ (cl\_float)\f$ |
+         *        | H_OUT_G| Buffer | Host   | O | Staging     | CL_MEM_READ_WRITE | \f$  width*height*sizeof\ (cl\_float)\f$ |
+         *        | H_OUT_B| Buffer | Host   | O | Staging     | CL_MEM_READ_WRITE | \f$  width*height*sizeof\ (cl\_float)\f$ |
+         *        | D_IN   | Buffer | Device | I | Processing  | CL_MEM_READ_ONLY  | \f$3*width*height*sizeof\ (cl\_uchar)\f$ |
+         *        | D_OUT_R| Buffer | Device | O | Processing  | CL_MEM_WRITE_ONLY | \f$  width*height*sizeof\ (cl\_float)\f$ |
+         *        | D_OUT_G| Buffer | Device | O | Processing  | CL_MEM_WRITE_ONLY | \f$  width*height*sizeof\ (cl\_float)\f$ |
+         *        | D_OUT_B| Buffer | Device | O | Processing  | CL_MEM_WRITE_ONLY | \f$  width*height*sizeof\ (cl\_float)\f$ |
          */
         template <>
         class GuidedFilterRGB<GuidedFilterRGBConfig::SEPARATED>
@@ -1756,22 +1766,21 @@ namespace GF
             /*! \brief Enumerates the memory objects handled by the class.
              *  \note `H_*` names refer to staging buffers on the host.
              *  \note `D_*` names refer to buffers on the device.
-             *  
-             *  \param H_IN input staging buffer.
-             *  \param H_OUT_R output staging buffer for channel R.
-             *  \param H_OUT_G output staging buffer for channel G.
-             *  \param H_OUT_B output staging buffer for channel B.
-             *  \param D_INTR_R intermediate buffer for input channel R.
-             *  \param D_INTR_G intermediate buffer for input channel G.
-             *  \param D_INTR_B intermediate buffer for input channel B.
-             *  \param D_IN input buffer.
-             *  \param D_OUT_R output buffer for channel R.
-             *  \param D_OUT_G output buffer for channel G.
-             *  \param D_OUT_B output buffer for channel B.
              */
-            enum class Memory : uint8_t { H_IN, H_OUT_R, H_OUT_G, H_OUT_B, 
-                                          D_INTR_R, D_INTR_G, D_INTR_B, 
-                                          D_IN, D_OUT_R, D_OUT_G, D_OUT_B };
+            enum class Memory : uint8_t
+            {
+                H_IN,      /*!< Input staging buffer. */
+                H_OUT_R,   /*!< Output staging buffer for channel R. */
+                H_OUT_G,   /*!< Output staging buffer for channel G. */
+                H_OUT_B,   /*!< Output staging buffer for channel B. */
+                D_IN,      /*!< Input buffer. */
+                D_INTR_R,  /*!< Intermediate buffer for input channel R. */
+                D_INTR_G,  /*!< Intermediate buffer for input channel G. */
+                D_INTR_B,  /*!< Intermediate buffer for input channel B. */
+                D_OUT_R,   /*!< Output buffer for channel R. */
+                D_OUT_G,   /*!< Output buffer for channel G. */
+                D_OUT_B    /*!< Output buffer for channel B. */
+            };
 
             /*! \brief Configures an OpenCL environment as specified by `_info`. */
             GuidedFilterRGB (clutils::CLEnv &_env, clutils::CLEnvInfo<2> _info);
@@ -1858,10 +1867,10 @@ namespace GF
          *        a `GuidedFilterRGB<GuidedFilterRGBConfig::INTERLEAVED_FLOAT>` instance:<br>
          *        | Name  | Type | Placement | I/O | Use | Properties | Size |
          *        |  ---  |:---: |   :---:   |:---:|:---:|   :---:    |:---: |
-         *        | H_IN  | Buffer | Host   | I | Staging     | CL_MEM_READ_WRITE | \f$width*height*sizeof\ (cl\_uchar)\f$ |
-         *        | H_OUT | Buffer | Host   | O | Staging     | CL_MEM_READ_WRITE | \f$width*height*sizeof\ (cl\_float)\f$ |
-         *        | D_IN  | Buffer | Device | I | Processing  | CL_MEM_READ_ONLY  | \f$width*height*sizeof\ (cl\_uchar)\f$ |
-         *        | D_OUT | Buffer | Device | O | Processing  | CL_MEM_WRITE_ONLY | \f$width*height*sizeof\ (cl\_float)\f$ |
+         *        | H_IN  | Buffer | Host   | I | Staging     | CL_MEM_READ_WRITE | \f$3*width*height*sizeof\ (cl\_uchar)\f$ |
+         *        | H_OUT | Buffer | Host   | O | Staging     | CL_MEM_READ_WRITE | \f$3*width*height*sizeof\ (cl\_float)\f$ |
+         *        | D_IN  | Buffer | Device | I | Processing  | CL_MEM_READ_ONLY  | \f$3*width*height*sizeof\ (cl\_uchar)\f$ |
+         *        | D_OUT | Buffer | Device | O | Processing  | CL_MEM_WRITE_ONLY | \f$3*width*height*sizeof\ (cl\_float)\f$ |
          */
         template <>
         class GuidedFilterRGB<GuidedFilterRGBConfig::INTERLEAVED_FLOAT>
@@ -1870,16 +1879,17 @@ namespace GF
             /*! \brief Enumerates the memory objects handled by the class.
              *  \note `H_*` names refer to staging buffers on the host.
              *  \note `D_*` names refer to buffers on the device.
-             *  
-             *  \param H_IN input staging buffer.
-             *  \param H_OUT output staging buffer.
-             *  \param D_INTR_R intermediate buffer for input channel R.
-             *  \param D_INTR_G intermediate buffer for input channel G.
-             *  \param D_INTR_B intermediate buffer for input channel B.
-             *  \param D_IN input buffer.
-             *  \param D_OUT output buffer.
              */
-            enum class Memory : uint8_t { H_IN, H_OUT, D_INTR_R, D_INTR_G, D_INTR_B, D_IN, D_OUT };
+            enum class Memory : uint8_t
+            {
+                H_IN,      /*!< Input staging buffer. */
+                H_OUT,     /*!< Output staging buffer. */
+                D_IN,      /*!< Input buffer. */
+                D_INTR_R,  /*!< Intermediate buffer for input channel R. */
+                D_INTR_G,  /*!< Intermediate buffer for input channel G. */
+                D_INTR_B,  /*!< Intermediate buffer for input channel B. */
+                D_OUT      /*!< Output buffer. */
+            };
 
             /*! \brief Configures an OpenCL environment as specified by `_info`. */
             GuidedFilterRGB (clutils::CLEnv &_env, clutils::CLEnvInfo<2> _info);
@@ -1974,13 +1984,14 @@ namespace GF
             /*! \brief Enumerates the memory objects handled by the class.
              *  \note `H_*` names refer to staging buffers on the host.
              *  \note `D_*` names refer to buffers on the device.
-             *  
-             *  \param H_IN input staging buffer.
-             *  \param H_OUT output staging buffer.
-             *  \param D_IN input buffer.
-             *  \param D_OUT output buffer.
              */
-            enum class Memory : uint8_t { H_IN, H_OUT, D_IN, D_OUT };
+            enum class Memory : uint8_t
+            {
+                H_IN,   /*!< Input staging buffer. */
+                H_OUT,  /*!< Output staging buffer. */
+                D_IN,   /*!< Input buffer. */
+                D_OUT   /*!< Output buffer. */
+            };
 
             /*! \brief Configures an OpenCL environment as specified by `_info`. */
             GuidedFilterDepth (clutils::CLEnv &_env, clutils::CLEnvInfo<2> _info);
@@ -2054,4 +2065,4 @@ namespace GF
 }
 }
 
-#endif  // ALGORITHMS_HPP
+#endif  // GF_ALGORITHMS_HPP

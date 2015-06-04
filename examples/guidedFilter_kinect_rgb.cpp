@@ -5,7 +5,7 @@
  *           algorithm on a live video stream. It processes the Kinect RGB  
  *           stream in OpenCL with the `GuidedFilter` pipeline.
  *  \author Nick Lamprianidis
- *  \version 1.1.1
+ *  \version 1.1.2
  *  \date 2015
  *  \copyright The MIT License (MIT)
  *  \par

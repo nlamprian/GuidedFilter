@@ -4,7 +4,7 @@
  *           initialize the necessary buffers, set up the workspaces, 
  *           and run the kernels.
  *  \author Nick Lamprianidis
- *  \version 1.1.1
+ *  \version 1.1.2
  *  \date 2015
  *  \copyright The MIT License (MIT)
  *  \par
@@ -29,8 +29,8 @@
  *  THE SOFTWARE.
  */
 
-#ifndef MATH_HPP
-#define MATH_HPP
+#ifndef GF_MATH_HPP
+#define GF_MATH_HPP
 
 #include <CLUtils.hpp>
 #include <GuidedFilter/common.hpp>
@@ -43,6 +43,8 @@ namespace cl_algo
 {
 namespace GF
 {
+/*! \brief Offers classes associated with mathematics operations.
+ */
 namespace Math
 {
 
@@ -74,15 +76,16 @@ namespace Math
         /*! \brief Enumerates the memory objects handled by the class.
          *  \note `H_*` names refer to staging buffers on the host.
          *  \note `D_*` names refer to buffers on the device.
-         *  
-         *  \param H_IN_A input staging buffer for first operand.
-         *  \param H_IN_B input staging buffer for second operand.
-         *  \param H_OUT output staging buffer.
-         *  \param D_IN_A input buffer for first operand.
-         *  \param D_IN_B input buffer for second operand.
-         *  \param D_OUT output buffer.
          */
-        enum class Memory : uint8_t { H_IN_A, H_IN_B, H_OUT, D_IN_A, D_IN_B, D_OUT };
+        enum class Memory : uint8_t
+        {
+            H_IN_A,  /*!< Input staging buffer for first operand.*/
+            H_IN_B,  /*!< Input staging buffer for second operand.*/
+            H_OUT,   /*!< Output staging buffer.*/
+            D_IN_A,  /*!< Input buffer for first operand.*/
+            D_IN_B,  /*!< Input buffer for second operand.*/
+            D_OUT    /*!< Output buffer.*/
+        };
 
         /*! \brief Configures an OpenCL environment as specified by `_info`. */
         Mult (clutils::CLEnv &_env, clutils::CLEnvInfo<1> _info);
@@ -160,13 +163,14 @@ namespace Math
         /*! \brief Enumerates the memory objects handled by the class.
          *  \note `H_*` names refer to staging buffers on the host.
          *  \note `D_*` names refer to buffers on the device.
-         *  
-         *  \param H_IN input staging buffer.
-         *  \param H_OUT output staging buffer.
-         *  \param D_IN input buffer.
-         *  \param D_OUT output buffer.
          */
-        enum class Memory : uint8_t { H_IN, H_OUT, D_IN, D_OUT };
+        enum class Memory : uint8_t
+        {
+            H_IN,   /*!< Input staging buffer. */
+            H_OUT,  /*!< Output staging buffer. */
+            D_IN,   /*!< Input buffer. */
+            D_OUT   /*!< Output buffer. */
+        };
 
         /*! \brief Configures an OpenCL environment as specified by `_info`. */
         Pown (clutils::CLEnv &_env, clutils::CLEnvInfo<1> _info);
@@ -225,4 +229,4 @@ namespace Math
 }
 }
 
-#endif  // MATH_HPP
+#endif  // GF_MATH_HPP

@@ -4,7 +4,7 @@
  *           initialize the necessary buffers, set up the workspaces, and 
  *           run the kernels.
  *  \author Nick Lamprianidis
- *  \version 1.1.1
+ *  \version 1.1.2
  *  \date 2015
  *  \copyright The MIT License (MIT)
  *  \par
@@ -1928,9 +1928,9 @@ namespace GF
         env (_env), info (_info), 
         context (env.getContext (info.pIdx)), 
         queue (env.getQueue (info.ctxIdx, info.qIdx[0])), 
-        kernelScan (env.getProgram (info.pgIdx), "scan"), 
-        kernelSumsScan (env.getProgram (info.pgIdx), "scan"), 
-        kernelAddSums (env.getProgram (info.pgIdx), "addGroupSums")
+        kernelScan (env.getProgram (info.pgIdx), "inclusveScan_f"), 
+        kernelSumsScan (env.getProgram (info.pgIdx), "inclusveScan_f"), 
+        kernelAddSums (env.getProgram (info.pgIdx), "addGroupSums_f")
     {
         wgMultiple = kernelScan.getWorkGroupInfo
             <CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE> (env.devices[info.pIdx][info.dIdx]);

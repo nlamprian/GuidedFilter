@@ -1,7 +1,7 @@
 /*! \file common.hpp
  *  \brief Declares classes used by the OpenCL interface classes in `cl_algo`.
  *  \author Nick Lamprianidis
- *  \version 1.1.1
+ *  \version 1.1.2
  *  \date 2015
  *  \copyright The MIT License (MIT)
  *  \par
@@ -26,13 +26,10 @@
  *  THE SOFTWARE.
  */
 
-#ifndef COMMON_HPP
-#define COMMON_HPP
+#ifndef GF_COMMON_HPP
+#define GF_COMMON_HPP
 
 
-/*! \brief Offers classes which set up kernel execution parameters and 
- *         provide interfaces for the handling of memory objects.
- */
 namespace cl_algo
 {
 namespace GF
@@ -42,15 +39,16 @@ namespace GF
      *  \details It's meant to be used when making a call to the `init` 
      *           method of one of the `cl_algo` classes. 
      *           It specifies which staging buffers to be instantiated.
-     *  
-     *  \param NONE do not instantiate any staging buffers.
-     *  \param I instantiate the input staging buffers.
-     *  \param O instantiate the output staging buffers.
-     *  \param IO instantiate both input and output staging buffers.
      */
-    enum class Staging : uint8_t { NONE, I, O, IO };
+    enum class Staging : uint8_t
+    {
+        NONE,  /*!< Do not instantiate any staging buffers. */
+        I,     /*!< Instantiate the input staging buffers. */
+        O,     /*!< Instantiate the output staging buffers. */
+        IO     /*!< Instantiate both input and output staging buffers. */
+    };
 
 }
 }
 
-#endif  // COMMON_HPP
+#endif  // GF_COMMON_HPP
