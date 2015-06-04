@@ -1,0 +1,10 @@
+var searchData=
+[
+  ['kernel_5ffilename_5fbox',['kernel_filename_box',['../testsBoxFilter_8cpp.html#a24fe4d9acab3ed87aae40e0ddd4416f4',1,'kernel_filename_box():&#160;testsBoxFilter.cpp'],['../testsGuidedFilter_8cpp.html#a24fe4d9acab3ed87aae40e0ddd4416f4',1,'kernel_filename_box():&#160;testsGuidedFilter.cpp']]],
+  ['kernel_5ffilename_5fgf',['kernel_filename_gf',['../testsGuidedFilter_8cpp.html#a18f2f917e26bdfb9749efd7a7b3f7817',1,'testsGuidedFilter.cpp']]],
+  ['kernel_5ffilename_5fimg',['kernel_filename_img',['../testsGuidedFilter_8cpp.html#a3bc67ebe39cde3e065da6e97d888633d',1,'kernel_filename_img():&#160;testsGuidedFilter.cpp'],['../testsImageSupport_8cpp.html#a3bc67ebe39cde3e065da6e97d888633d',1,'kernel_filename_img():&#160;testsImageSupport.cpp']]],
+  ['kernel_5ffilename_5fmath',['kernel_filename_math',['../testsGuidedFilter_8cpp.html#a574f192501dcc35d5e3f5a130a692934',1,'kernel_filename_math():&#160;testsGuidedFilter.cpp'],['../testsMath_8cpp.html#a574f192501dcc35d5e3f5a130a692934',1,'kernel_filename_math():&#160;testsMath.cpp']]],
+  ['kernel_5ffilename_5fscan',['kernel_filename_scan',['../testsBoxFilter_8cpp.html#a363dd6eaf438c12336983426d274aaed',1,'kernel_filename_scan():&#160;testsBoxFilter.cpp'],['../testsGuidedFilter_8cpp.html#a363dd6eaf438c12336983426d274aaed',1,'kernel_filename_scan():&#160;testsGuidedFilter.cpp']]],
+  ['kernel_5ffilename_5ftr',['kernel_filename_tr',['../testsBoxFilter_8cpp.html#a2d50eaea9cde12ed9f86e2b839a22077',1,'kernel_filename_tr():&#160;testsBoxFilter.cpp'],['../testsGuidedFilter_8cpp.html#a2d50eaea9cde12ed9f86e2b839a22077',1,'kernel_filename_tr():&#160;testsGuidedFilter.cpp']]],
+  ['kernel_5ffiles',['kernel_files',['../guidedFilter__image_8cpp.html#a1f80d4a9ae46718c839a8b1610182efb',1,'kernel_files():&#160;guidedFilter_image.cpp'],['../guidedFilter__kinect__point__cloud_8cpp.html#a1f80d4a9ae46718c839a8b1610182efb',1,'kernel_files():&#160;guidedFilter_kinect_point_cloud.cpp'],['../guidedFilter__kinect__rgb_8cpp.html#a1f80d4a9ae46718c839a8b1610182efb',1,'kernel_files():&#160;guidedFilter_kinect_rgb.cpp']]]
+];
