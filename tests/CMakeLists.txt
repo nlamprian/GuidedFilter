@@ -1,7 +1,6 @@
 if ( BUILD_TESTS )
 
     find_package ( Threads REQUIRED )
-    find_package ( OpenCV REQUIRED )
 
     include_directories ( ${CLUtils_INCLUDE_DIR} 
                           ${GTEST_INCLUDE_DIRS}

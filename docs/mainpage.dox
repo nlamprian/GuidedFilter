@@ -33,9 +33,9 @@ Currently, there are 3 example applications. For `guided_filter_image`, you'll n
 > mkdir build <br>
 > cd build
 > 
-> cmake .. <br>
+> cmake -DBUILD_EXAMPLES=ON .. <br>
 > \# or to build the tests too <br>
-> cmake -DBUILD_TESTS=ON ..
+> cmake -DBUILD_EXAMPLES=ON -DBUILD_TESTS=ON ..
 > 
 > make
 > 

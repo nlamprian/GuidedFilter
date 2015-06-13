@@ -3917,7 +3917,8 @@ namespace GF
          *  \param[in] _info opencl configuration. Specifies the context, queue, etc, to be used.
          *                   The class requires **two** `(2)` **command queues** (on the same device).
          */
-        GuidedFilterRGB<GuidedFilterRGBConfig::SEPARATED>::GuidedFilterRGB (clutils::CLEnv &_env, clutils::CLEnvInfo<2> _info) : 
+        GuidedFilterRGB<GuidedFilterRGBConfig::SEPARATED>::GuidedFilterRGB (
+            clutils::CLEnv &_env, clutils::CLEnvInfo<2> _info) : 
             env (_env), info (_info), 
             context (env.getContext (info.pIdx)), 
             queue0 (env.getQueue (info.ctxIdx, info.qIdx[0])), 
@@ -4142,7 +4143,8 @@ namespace GF
          *  \param[in] events a wait-list of events.
          *  \param[out] event event associated with the kernel execution.
          */
-        void GuidedFilterRGB<GuidedFilterRGBConfig::SEPARATED>::run (const std::vector<cl::Event> *events, cl::Event *event)
+        void GuidedFilterRGB<GuidedFilterRGBConfig::SEPARATED>::run (
+            const std::vector<cl::Event> *events, cl::Event *event)
         {
             sRGB.run (events, &sEvent); waitList[0] = sEvent;
             gfR.run (&waitList);
@@ -4404,7 +4406,8 @@ namespace GF
          *  \param[in] events a wait-list of events.
          *  \param[out] event event associated with the kernel execution.
          */
-        void GuidedFilterRGB<GuidedFilterRGBConfig::INTERLEAVED_FLOAT>::run (const std::vector<cl::Event> *events, cl::Event *event)
+        void GuidedFilterRGB<GuidedFilterRGBConfig::INTERLEAVED_FLOAT>::run (
+            const std::vector<cl::Event> *events, cl::Event *event)
         {
             sRGB.run (events, &sEvent); waitList[0] = sEvent;
             gfR.run (&waitList);
@@ -4585,8 +4588,8 @@ namespace GF
          *  \param[in] events a wait-list of events.
          *  \param[out] event event associated with the write operation to the device buffer.
          */
-        void GuidedFilterDepth::write (
-            GuidedFilterDepth::Memory mem, void *ptr, bool block, const std::vector<cl::Event> *events, cl::Event *event)
+        void GuidedFilterDepth::write (GuidedFilterDepth::Memory mem, void *ptr, bool block, 
+            const std::vector<cl::Event> *events, cl::Event *event)
         {
             if (staging == Staging::I || staging == Staging::IO)
             {
@@ -4614,8 +4617,8 @@ namespace GF
          *  \param[in] events a wait-list of events.
          *  \param[out] event event associated with the read operation to the staging buffer.
          */
-        void* GuidedFilterDepth::read (
-            GuidedFilterDepth::Memory mem, bool block, const std::vector<cl::Event> *events, cl::Event *event)
+        void* GuidedFilterDepth::read (GuidedFilterDepth::Memory mem, bool block, 
+            const std::vector<cl::Event> *events, cl::Event *event)
         {
             if (staging == Staging::O || staging == Staging::IO)
             {

@@ -1,11 +1,11 @@
-find_package ( Freenect QUIET )
 find_package ( OpenCV QUIET )
+find_package ( Freenect QUIET )
 
 include_directories ( ${CLUtils_INCLUDE_DIR} )
 
 if ( OpenCV_FOUND )
 
-    include_directories ( ${OpenCV_INCLUDE_DIR} )
+    include_directories ( ${OpenCV2_INCLUDE_DIRS} )
 
     add_executable ( ${FNAME}_image guidedFilter_image.cpp )
 
@@ -14,7 +14,7 @@ if ( OpenCV_FOUND )
     target_link_libraries ( ${FNAME}_image ${CLUtils_LIBRARIES}
                                            GFAlgorithms GFMath
                                            ${OPENGL_LIBRARIES} 
-                                           ${OpenCV_LIBRARIES} 
+                                           ${OpenCV2_LIBRARIES} 
                                            ${OPENCL_LIBRARIES} )
 
 endif ( OpenCV_FOUND )

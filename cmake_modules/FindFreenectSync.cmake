@@ -1,8 +1,6 @@
 # - Try to find libfreenect_sync
 #
-
 #MESSAGE(STATUS ${CMAKE_SOURCE_DIR}/../libfreenect/include)
-
 
 FIND_PATH(
   freenectsync_INCLUDE_DIR
@@ -34,12 +32,12 @@ ENDIF()
 
 IF(freenectsync_FOUND)
    IF(NOT freenectsync_FIND_QUIETLY)
-      MESSAGE(STATUS "Found freenect: ${freenectsync_LIBRARY}")
+      MESSAGE(STATUS "Found freenect_sync:")
+      MESSAGE(STATUS " - Includes: ${freenectsync_INCLUDE_DIR}")
+      MESSAGE(STATUS " - Libraries: ${freenectsync_LIBRARY}")
    ENDIF()
 ELSE()
    IF(freenectsync_FIND_REQUIRED)
       MESSAGE(FATAL_ERROR "Could not find freenectsync")
    ENDIF()
 ENDIF()
-
-

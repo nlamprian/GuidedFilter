@@ -5,6 +5,7 @@ set ( PROJECT_VERSION_MAJOR 1 )
 set ( PROJECT_VERSION_MINOR 1 )
 set ( PROJECT_VERSION_PATCH 2 )
 
+option ( BUILD_EXAMPLES "Build examples" OFF )
 option ( BUILD_TESTS "Build tests" OFF )
 
 list ( APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake_modules )
@@ -29,19 +30,26 @@ include_directories ( ${COMMON_INCLUDES}
 # set ( CLUtils_ROOT <set-to-your-local-path-if-necessary> )
 find_package ( CLUtils QUIET )
 if ( NOT CLUtils_FOUND )
+    message ( STATUS "CLUtils not found:" )
+    message ( STATUS " - Library will be downloaded from source" )
     add_subdirectory ( external/CLUtils )
 endif ( NOT CLUtils_FOUND )
 
 add_subdirectory ( src )
 add_subdirectory ( kernels )
-add_subdirectory ( examples )
 add_subdirectory ( docs )
+
+if ( BUILD_EXAMPLES )
+    add_subdirectory ( examples )
+endif ( BUILD_EXAMPLES )
 
 if ( BUILD_TESTS )
     enable_testing (  )
     
     find_package ( GTest QUIET )
     if ( NOT GTEST_FOUND )
+        message ( STATUS "gtest not found:" )
+        message ( STATUS " - Library will be downloaded from source" )
         add_subdirectory ( external/gtest )
     endif ( NOT GTEST_FOUND )
     

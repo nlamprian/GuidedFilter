@@ -651,7 +651,8 @@ namespace GF
         /*! \brief Returns a reference to an internal memory object. */
         cl::Memory& get (DepthTo3D::Memory mem);
         /*! \brief Configures kernel execution parameters. */
-        void init (unsigned int _width, unsigned int _height, float _f, float _scaling = 1.f, Staging _staging = Staging::IO);
+        void init (unsigned int _width, unsigned int _height, 
+                   float _f, float _scaling = 1.f, Staging _staging = Staging::IO);
         /*! \brief Performs a data transfer to a device buffer. */
         void write (DepthTo3D::Memory mem = DepthTo3D::Memory::D_IN, void *ptr = nullptr, bool block = CL_FALSE, 
                     const std::vector<cl::Event> *events = nullptr, cl::Event *event = nullptr);
@@ -759,7 +760,8 @@ namespace GF
         /*! \brief Returns a reference to an internal memory object. */
         cl::Memory& get (RGBDTo8D::Memory mem);
         /*! \brief Configures kernel execution parameters. */
-        void init (unsigned int _width, unsigned int _height, float _f, float _scaling = 1.f, Staging _staging = Staging::IO);
+        void init (unsigned int _width, unsigned int _height, 
+                   float _f, float _scaling = 1.f, Staging _staging = Staging::IO);
         /*! \brief Performs a data transfer to a device buffer. */
         void write (RGBDTo8D::Memory mem = RGBDTo8D::Memory::D_IN_D, void *ptr = nullptr, bool block = CL_FALSE, 
                     const std::vector<cl::Event> *events = nullptr, cl::Event *event = nullptr);
@@ -1242,7 +1244,8 @@ namespace GF
         /*! \brief Returns a reference to an internal memory object. */
         cl::Memory& get (BoxFilterSAT::Memory mem);
         /*! \brief Configures kernel execution parameters. */
-        void init (unsigned int _width, unsigned int _height, int _radius, float _scaling = 1e-4f, Staging _staging = Staging::IO);
+        void init (unsigned int _width, unsigned int _height, 
+                   int _radius, float _scaling = 1e-4f, Staging _staging = Staging::IO);
         /*! \brief Performs a data transfer to a device buffer. */
         void write (BoxFilterSAT::Memory mem = BoxFilterSAT::Memory::D_IN, void *ptr = nullptr, bool block = CL_FALSE, 
                     const std::vector<cl::Event> *events = nullptr, cl::Event *event = nullptr);
@@ -1717,8 +1720,10 @@ namespace GF
         /*! \brief Enumerates configurations for the `GuidedFilterRGB` class. */
         enum class GuidedFilterRGBConfig : uint8_t
         {
-            INTERLEAVED_FLOAT,  /*!< Identifies the case where the output channels are mixed together in an RGB image of type `float`. */
-            SEPARATED           /*!< Identifies the case where the output channels are left separated in independent images. */
+            INTERLEAVED_FLOAT,  /*!< Identifies the case where the output channels 
+                                 *   are mixed together in an RGB image of type `float`. */
+            SEPARATED           /*!< Identifies the case where the output channels 
+                                 *   are left separated in independent images. */
         };
 
 
@@ -2001,8 +2006,9 @@ namespace GF
             void init (unsigned int _width, unsigned int _height, 
                        int _radius, float _eps, float _dScaling = 1e-3f, Staging _staging = Staging::IO);
             /*! \brief Performs a data transfer to a device buffer. */
-            void write (GuidedFilterDepth::Memory mem = GuidedFilterDepth::Memory::D_IN, void *ptr = nullptr, 
-                        bool block = CL_FALSE, const std::vector<cl::Event> *events = nullptr, cl::Event *event = nullptr);
+            void write (GuidedFilterDepth::Memory mem = GuidedFilterDepth::Memory::D_IN, 
+                        void *ptr = nullptr, bool block = CL_FALSE, 
+                        const std::vector<cl::Event> *events = nullptr, cl::Event *event = nullptr);
             /*! \brief Performs a data transfer to a staging buffer. */
             void* read (GuidedFilterDepth::Memory mem = GuidedFilterDepth::Memory::H_OUT, bool block = CL_TRUE, 
                         const std::vector<cl::Event> *events = nullptr, cl::Event *event = nullptr);

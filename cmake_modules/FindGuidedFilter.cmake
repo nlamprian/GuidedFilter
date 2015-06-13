@@ -1,7 +1,9 @@
 # Try to find GuidedFilter
-# Once done this will define:
 #
-#   GuidedFilter_ROOT         - if set, it will try to find in this folder
+# The following variables are optionally searched for defaults:
+#   GuidedFilter_ROOT         - Root directory of GuidedFilter source tree
+#
+# Once done, this will define:
 #   GuidedFilter_FOUND        - system has GuidedFilter
 #   GuidedFilter_INCLUDE_DIR  - the GuidedFilter include directory
 #   GuidedFilter_LIBRARIES    - link these to use GuidedFilter
@@ -20,6 +22,7 @@ find_library (
     GuidedFilter_LIB_ALGORITHMS 
     NAMES GFAlgorithms 
     PATHS ${GuidedFilter_ROOT}/build/lib 
+          ${GuidedFilter_ROOT}/../GuidedFilter-build/lib
           /usr/lib/GuidedFilter 
           /usr/local/lib/GuidedFilter 
     DOC "The Guided Filter algorithms library"
@@ -29,6 +32,7 @@ find_library (
     GuidedFilter_LIB_MATH 
     NAMES GFMath 
     PATHS ${GuidedFilter_ROOT}/build/lib 
+          ${GuidedFilter_ROOT}/../GuidedFilter-build/lib
           /usr/lib/GuidedFilter 
           /usr/local/lib/GuidedFilter 
     DOC "The Guided Filter math library"
@@ -38,6 +42,7 @@ find_library (
     GuidedFilter_LIB_HELPERFUNCS 
     NAMES GFHelperFuncs 
     PATHS ${GuidedFilter_ROOT}/build/lib 
+          ${GuidedFilter_ROOT}/../GuidedFilter-build/lib
           /usr/lib/GuidedFilter 
           /usr/local/lib/GuidedFilter 
     DOC "The Guided Filter helper functions library"
@@ -61,6 +66,9 @@ if ( GuidedFilter_FOUND )
         ${GuidedFilter_LIB_MATH} 
         ${GuidedFilter_LIB_HELPERFUNCS} 
     )
+    message ( STATUS "Found GuidedFilter:" )
+    message ( STATUS " - Includes: ${GuidedFilter_INCLUDE_DIR}" )
+    message ( STATUS " - Libraries: ${GuidedFilter_LIBRARIES}" )
 else ( GuidedFilter_FOUND )
     set ( GuidedFilter_LIBRARIES )
 endif ( GuidedFilter_FOUND )
