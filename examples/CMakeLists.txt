@@ -1,9 +1,9 @@
-find_package ( OpenCV QUIET )
+find_package ( OpenCV2 QUIET )
 find_package ( Freenect QUIET )
 
 include_directories ( ${CLUtils_INCLUDE_DIR} )
 
-if ( OpenCV_FOUND )
+if ( OpenCV2_FOUND )
 
     include_directories ( ${OpenCV2_INCLUDE_DIRS} )
 
@@ -17,7 +17,7 @@ if ( OpenCV_FOUND )
                                            ${OpenCV2_LIBRARIES} 
                                            ${OPENCL_LIBRARIES} )
 
-endif ( OpenCV_FOUND )
+endif ( OpenCV2_FOUND )
 
 if ( FREENECT_FOUND )
 

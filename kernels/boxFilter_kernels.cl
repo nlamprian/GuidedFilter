@@ -213,7 +213,7 @@ void boxFilter (global float *in, global float *out, local float *data, int radi
     // Filter window coordinates
     int2 c0 = { gX - radius - 1, gY - radius - 1 };                            // Top left corner indices
     int2 c1 = { min (gX + radius, gXdim - 1), min (gY + radius, gYdim - 1) };  // Bottom right corner indices
-    int2 outOfBounds = isless (convert_float2 (c0), 0.f);
+    int2 outOfBounds = c0 < 0;
 
     // Number of elements in the filter window
     int2 d = c1 - select (c0, -1, outOfBounds);

@@ -13,7 +13,7 @@
 # Balazs [2011-01-18]:
 # - Created from scratch for the reorganized OpenCV 2 structure introduced at version 2.2
 # Jbohren [2011-06-10]:
-# - Added OpenCV_ROOT_DIR for UNIX platforms & additional opencv include dir
+# - Added OpenCV2_ROOT_DIR for UNIX platforms & additional opencv include dir
 #
 # This file should be removed when CMake will provide an equivalent
 
@@ -22,7 +22,7 @@
 # typical root dirs of installations, exactly one of them is used
 IF(WIN32)
     SET(OpenCV2_POSSIBLE_ROOT_DIRS
-        "$ENV{OpenCV_ROOT_DIR}"
+        "$ENV{OpenCV2_ROOT_DIR}"
         "$ENV{SystemDrive}/OpenCV2.3"                     # Windows: OpenCV 2.3 default installation dir (expected future revision)
         "$ENV{SystemDrive}/OpenCV2.2"                     # Windows: OpenCV 2.2 default installation dir
         "$ENV{SystemDrive}/Program Files/OpenCV2.3"       # 32 bit ProgramFiles dir on Win32;  64 bit ProgramFiles dir on Win64 (expected future revision)
@@ -33,11 +33,11 @@ IF(WIN32)
 ELSE(WIN32)
     SET(OpenCV2_POSSIBLE_ROOT_DIRS
         "$ENV{ROS_ROOT}/../vision_opencv/opencv2/opencv"
-        "$ENV{OpenCV_ROOT_DIR}"                         # *NIX: custom install location (like ROS)
+        "$ENV{OpenCV2_ROOT_DIR}"                        # *NIX: custom install location (like ROS)
         /usr/local                                      # Linux: default dir by CMake
         /usr                                            # Linux
         /opt/local                                      # OS X: default MacPorts location
-  )
+        )
 ENDIF(WIN32)
 
 
@@ -243,7 +243,7 @@ ENDIF(WIN32)
 
 # display help message
 IF(OpenCV2_FOUND)
-    MESSAGE(STATUS "Found OpenCV:")
+    MESSAGE(STATUS "Found OpenCV2:")
     MESSAGE(STATUS " - Includes: ${OpenCV2_INCLUDE_DIRS}")
     MESSAGE(STATUS " - Libraries: ${OpenCV2_LIBRARIES}")
 ELSE(OpenCV2_FOUND)

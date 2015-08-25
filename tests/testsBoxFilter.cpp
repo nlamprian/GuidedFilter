@@ -340,7 +340,7 @@ TEST (BoxFilter, boxFilterSAT)
 
         box.write ();  // Copy data to device
 
-        box.run ();  // Execute kernels (~ 131 us)
+        box.run ();  // Execute kernels (~ 166 us)
         
         cl_float *results = (cl_float *) box.read ();  // Copy results to host
         // GF::printBufferF ("Received:", results, width, height, 5);
