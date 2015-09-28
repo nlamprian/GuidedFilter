@@ -6,7 +6,7 @@
  *           and Depth streams in OpenCL with the `GuidedFilter` pipeline. Then,
  *           it creates a point cloud and displays it in an OpenGL window.
  *  \author Nick Lamprianidis
- *  \version 1.1.2
+ *  \version 1.2.0
  *  \date 2015
  *  \copyright The MIT License (MIT)
  *  \par
@@ -182,7 +182,7 @@ public:
         to3D.get (cl_algo::GF::DepthTo3D::Memory::D_IN) = 
             kGFDepth.get (cl_algo::GF::Kinect::GuidedFilterDepth::Memory::D_OUT);
         to3D.get (cl_algo::GF::DepthTo3D::Memory::D_OUT) = buffersGL[1];
-        to3D.init (imgWidth, imgHeight, focalLength, 1 / dScaling, cl_algo::GF::Staging::NONE);
+        to3D.init (imgWidth, imgHeight, focalLength, 1.f, cl_algo::GF::Staging::NONE);
     }
 
     /*! \brief Processes RGB and Depth frames on the GPU.
@@ -319,37 +319,6 @@ private:
 };
 
 
-/*! \brief A class hierarchy for manipulating a mutex. */
-class Mutex
-{
-public:
-    void lock () { freenectMutex.lock (); }
-    void unlock () { freenectMutex.unlock (); }
-
-    /*! \brief A class that automates the manipulation of 
-     *         the outer class instance's mutex.
-     *  \details Mutex's mutex is locked with the creation of a 
-     *           ScopedLock instance and unlocked with the 
-     *           destruction of the ScopedLock instance.
-     */
-    class ScopedLock
-    {
-    public:
-        ScopedLock (Mutex &mtx) : mMutex (mtx) { mMutex.lock (); }
-        ~ScopedLock () { mMutex.unlock (); }
-
-    private:
-        Mutex &mMutex;
-
-    };
-
-private:
-    /*! A mutex for safely accessing a buffer updated by the freenect thread. */
-    std::mutex freenectMutex;
-
-};
-
-
 /*! \brief A class that extends Freenect::FreenectDevice by defining 
  *         the VideoCallback function so we can be getting updates 
  *         with the latest RGB frame.
@@ -388,7 +357,7 @@ public:
      */
     void VideoCallback (void *rgb, uint32_t timestamp)
     {
-        Mutex::ScopedLock lock (rgbMutex);
+        std::lock_guard<std::mutex> lock (rgbMutex);
         
         std::copy ((cl_uchar *) rgb, (cl_uchar *) rgb + getVideoBufferSize (), rgbBuffer);
         newRGBFrame = true;
@@ -403,7 +372,7 @@ public:
      */
     void DepthCallback (void *depth, uint32_t timestamp)
     {
-        Mutex::ScopedLock lock (depthMutex);
+        std::lock_guard<std::mutex> lock (depthMutex);
         
         std::copy ((cl_ushort *) depth, (cl_ushort *) depth + getDepthBufferSize () / 2, depthBuffer);
         newDepthFrame = true;
@@ -417,8 +386,8 @@ public:
      */
     bool updateFrames ()
     {
-        Mutex::ScopedLock lockRGB (rgbMutex);
-        Mutex::ScopedLock lockDepth (depthMutex);
+        std::lock_guard<std::mutex> lockRGB (rgbMutex);
+        std::lock_guard<std::mutex> lockDepth (depthMutex);
         
         if (!newRGBFrame || !newDepthFrame)
             return false;
@@ -432,7 +401,7 @@ public:
     }
 
 private:
-    Mutex rgbMutex, depthMutex;
+    std::mutex rgbMutex, depthMutex;
     cl_uchar *rgbBuffer;
     cl_ushort *depthBuffer;
     bool newRGBFrame, newDepthFrame;

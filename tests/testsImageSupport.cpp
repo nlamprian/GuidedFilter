@@ -5,7 +5,7 @@
  *        of the associated algorithms. They are used only for testing purposes, 
  *        and not for examining the performance of their GPU alternatives.
  *  \author Nick Lamprianidis
- *  \version 1.1.2
+ *  \version 1.2.0
  *  \date 2015
  *  \copyright The MIT License (MIT)
  *  \par
@@ -685,7 +685,7 @@ TEST (ImageSupport, rgbNorm)
 }
 
 
-/*! \brief Tests the **rgbdTo8D** kernel.
+/*! \brief Tests the **rgbdTo8D** kernel without RGB normalization.
  *  \details The kernel fuses geometry and color values into 8D feature points.
  */
 TEST (ImageSupport, rgbdTo8D)
@@ -725,14 +725,14 @@ TEST (ImageSupport, rgbdTo8D)
         to8D.write (cl_algo::GF::RGBDTo8D::Memory::D_IN_G);
         to8D.write (cl_algo::GF::RGBDTo8D::Memory::D_IN_B);
 
-        to8D.run ();  // Execute kernels (121 us)
+        to8D.run ();  // Execute kernels (133 us)
         
         cl_float8 *results = (cl_float8 *) to8D.read ();  // Copy results to host
         // GF::printBufferF ("Received:", (cl_float *) results, 8, points, 1);
 
         // Produce reference 8D feature points
         cl_float8 *ref8D = new cl_float8[points];
-        GF::cpuRGBDTo8D (to8D.hPtrInD, to8D.hPtrInR, to8D.hPtrInG, to8D.hPtrInB, ref8D, width, height, f);
+        GF::cpuRGBDTo8D (to8D.hPtrInD, to8D.hPtrInR, to8D.hPtrInG, to8D.hPtrInB, ref8D, width, height, f, false);
         // GF::printBufferF ("Expected:", (cl_float *) ref8D, 8, points, 1);
 
         // Verify the array of 8D feature points
@@ -757,7 +757,7 @@ TEST (ImageSupport, rgbdTo8D)
             for (int i = 0; i < nRepeat; ++i)
             {
                 cTimer.start ();
-                GF::cpuRGBDTo8D (to8D.hPtrInD, to8D.hPtrInR, to8D.hPtrInG, to8D.hPtrInB, ref8D, width, height, f);
+                GF::cpuRGBDTo8D (to8D.hPtrInD, to8D.hPtrInR, to8D.hPtrInG, to8D.hPtrInB, ref8D, width, height, f, false);
                 pCPU[i] = cTimer.stop ();
             }
             
@@ -769,6 +769,197 @@ TEST (ImageSupport, rgbdTo8D)
 
             // Benchmark
             pGPU.print (pCPU, "rgbdTo8D");
+        }
+
+    }
+    catch (const cl::Error &error)
+    {
+        std::cerr << error.what ()
+                  << " (" << clutils::getOpenCLErrorCodeString (error.err ()) 
+                  << ")"  << std::endl;
+        exit (EXIT_FAILURE);
+    }
+}
+
+
+/*! \brief Tests the **rgbdTo8D** kernel with RGB normalization.
+ *  \details The kernel fuses geometry and color values into 8D feature points.
+ */
+TEST (ImageSupport, rgbdTo8DwRGBNorm)
+{
+    try
+    {
+        const float f = 595.f;  // focal length (for Kinect)
+        const unsigned int width = 640, height = 480;
+        const unsigned int points = width * height;
+        const unsigned int bufferInSize = points * sizeof (cl_float);
+        const unsigned int bufferOutSize = points * sizeof (cl_float8);
+
+        // Setup the OpenCL environment
+        clutils::CLEnv clEnv;
+        clEnv.addContext (0);
+        clEnv.addQueue (0, 0, CL_QUEUE_PROFILING_ENABLE);
+        clEnv.addProgram (0, kernel_filename_img);
+
+        // Configure kernel execution parameters
+        clutils::CLEnvInfo<1> info (0, 0, 0, { 0 }, 0);
+        cl_algo::GF::RGBDTo8D to8D (clEnv, info);
+        to8D.init (width, height, f, 1.f, 1);
+
+        // Initialize data (writes on staging buffer directly)
+        std::generate (to8D.hPtrInD, to8D.hPtrInD + points, GF::rNum_0_10000);
+        std::generate (to8D.hPtrInR, to8D.hPtrInR + points, GF::rNum_R_0_1);
+        std::generate (to8D.hPtrInG, to8D.hPtrInG + points, GF::rNum_R_0_1);
+        std::generate (to8D.hPtrInB, to8D.hPtrInB + points, GF::rNum_R_0_1);
+        // GF::printBufferF ("Original D:", to8D.hPtrInD, width, height, 1);
+        // GF::printBufferF ("Original R:", to8D.hPtrInR, width, height, 1);
+        // GF::printBufferF ("Original G:", to8D.hPtrInG, width, height, 1);
+        // GF::printBufferF ("Original B:", to8D.hPtrInB, width, height, 1);
+        
+        // Copy data to device
+        to8D.write (cl_algo::GF::RGBDTo8D::Memory::D_IN_D);
+        to8D.write (cl_algo::GF::RGBDTo8D::Memory::D_IN_R);
+        to8D.write (cl_algo::GF::RGBDTo8D::Memory::D_IN_G);
+        to8D.write (cl_algo::GF::RGBDTo8D::Memory::D_IN_B);
+
+        to8D.run ();  // Execute kernels (136 us)
+        
+        cl_float8 *results = (cl_float8 *) to8D.read ();  // Copy results to host
+        // GF::printBufferF ("Received:", (cl_float *) results, 8, points, 1);
+
+        // Produce reference 8D feature points
+        cl_float8 *ref8D = new cl_float8[points];
+        GF::cpuRGBDTo8D (to8D.hPtrInD, to8D.hPtrInR, to8D.hPtrInG, to8D.hPtrInB, ref8D, width, height, f, true);
+        // GF::printBufferF ("Expected:", (cl_float *) ref8D, 8, points, 1);
+
+        // Verify the array of 8D feature points
+        float eps = 4200 * std::numeric_limits<float>::epsilon ();  // 0.000500679
+        for (uint i = 0; i < points; ++i)
+        {
+            cl_float *refPoint = (cl_float *) &ref8D[i];
+            cl_float *gpuPoint = (cl_float *) &results[i];
+
+            for (uint j = 0; j < 8; ++j)
+                ASSERT_LT (std::abs (refPoint[j] - gpuPoint[j]), eps);
+        }
+
+        // Profiling ===========================================================
+        if (profiling)
+        {
+            const int nRepeat = 1;  /* Number of times to perform the tests. */
+
+            // CPU
+            clutils::CPUTimer<double, std::milli> cTimer;
+            clutils::ProfilingInfo<nRepeat> pCPU ("CPU");
+            for (int i = 0; i < nRepeat; ++i)
+            {
+                cTimer.start ();
+                GF::cpuRGBDTo8D (to8D.hPtrInD, to8D.hPtrInR, to8D.hPtrInG, to8D.hPtrInB, ref8D, width, height, f, true);
+                pCPU[i] = cTimer.stop ();
+            }
+            
+            // GPU
+            clutils::GPUTimer<std::milli> gTimer (clEnv.devices[0][0]);
+            clutils::ProfilingInfo<nRepeat> pGPU ("GPU");
+            for (int i = 0; i < nRepeat; ++i)
+                pGPU[i] = to8D.run (gTimer);
+
+            // Benchmark
+            pGPU.print (pCPU, "rgbdTo8DwRGBNorm");
+        }
+
+    }
+    catch (const cl::Error &error)
+    {
+        std::cerr << error.what ()
+                  << " (" << clutils::getOpenCLErrorCodeString (error.err ()) 
+                  << ")"  << std::endl;
+        exit (EXIT_FAILURE);
+    }
+}
+
+
+/*! \brief Tests the **splitPC8D** kernel.
+ *  \details The kernel splits an 8-D point cloud into 
+ *           4-D geometry points and RGBA color points.
+ */
+TEST (ImageSupport, splitPC8D)
+{
+    try
+    {
+        const unsigned int width = 640, height = 480;
+        const unsigned int points = width * height;
+        const unsigned int bufferInSize = points * sizeof (cl_float8);
+        const unsigned int bufferOutSize = points * sizeof (cl_float4);
+        const unsigned int offset = 0;
+
+        // Setup the OpenCL environment
+        clutils::CLEnv clEnv;
+        clEnv.addContext (0);
+        clEnv.addQueue (0, 0, CL_QUEUE_PROFILING_ENABLE);
+        clEnv.addProgram (0, kernel_filename_img);
+
+        // Configure kernel execution parameters
+        clutils::CLEnvInfo<1> info (0, 0, 0, { 0 }, 0);
+        cl_algo::GF::SplitPC8D sp8D (clEnv, info);
+        sp8D.init (points, offset);
+
+        // Initialize data (writes on staging buffer directly)
+        std::generate (sp8D.hPtrIn, sp8D.hPtrIn + points, GF::rNum_R_0_1);
+        // GF::printBufferF ("Original:", sp8D.hPtrIn, 8, points, 3);
+        
+        // Copy data to device
+        sp8D.write ();
+
+        sp8D.run ();  // Execute kernels (151 us)
+        
+        // Copy results to host
+        cl_float *pc4d = (cl_float *) sp8D.read (cl_algo::GF::SplitPC8D::Memory::H_OUT_PC4D, CL_FALSE);
+        cl_float *rgba = (cl_float *) sp8D.read (cl_algo::GF::SplitPC8D::Memory::H_OUT_RGBA);
+        // GF::printBufferF ("Received PC4D:", pc4d, 4, points, 3);
+        // GF::printBufferF ("Received RGBA:", rgba, 4, points, 3);
+
+        // Produce reference 8D feature points
+        cl_float *refPC4D = (cl_float *) new cl_float8[points];
+        cl_float *refRGBA = (cl_float *) new cl_float8[points];
+        GF::cpuSplitPC8D (sp8D.hPtrIn, refPC4D, refRGBA, points);
+        // GF::printBufferF ("Expected PC4D:", refPC4D, 4, points, 3);
+        // GF::printBufferF ("Expected RGBA:", refRGBA, 4, points, 3);
+
+        // Verify the sets of points
+        unsigned int offset4 = offset << 2;
+        for (uint k = 0; k < 4 * points; k += 4)
+        {
+            for (uint j = 0; j < 4; ++j)
+            {
+                ASSERT_EQ (refPC4D[k + j], pc4d[offset4 + k + j]);
+                ASSERT_EQ (refRGBA[k + j], rgba[offset4 + k + j]);
+            }
+        }
+
+        // Profiling ===========================================================
+        if (profiling)
+        {
+            const int nRepeat = 1;  /* Number of times to perform the tests. */
+
+            // CPU
+            clutils::CPUTimer<double, std::milli> cTimer;
+            clutils::ProfilingInfo<nRepeat> pCPU ("CPU");
+            for (int i = 0; i < nRepeat; ++i)
+            {
+                cTimer.start ();
+                GF::cpuSplitPC8D (sp8D.hPtrIn, refPC4D, refRGBA, points);
+                pCPU[i] = cTimer.stop ();
+            }
+            
+            // GPU
+            clutils::GPUTimer<std::milli> gTimer (clEnv.devices[0][0]);
+            clutils::ProfilingInfo<nRepeat> pGPU ("GPU");
+            for (int i = 0; i < nRepeat; ++i)
+                pGPU[i] = sp8D.run (gTimer);
+
+            // Benchmark
+            pGPU.print (pCPU, "splitPC8D");
         }
 
     }

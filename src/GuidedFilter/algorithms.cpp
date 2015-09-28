@@ -4,7 +4,7 @@
  *           initialize the necessary buffers, set up the workspaces, and 
  *           run the kernels.
  *  \author Nick Lamprianidis
- *  \version 1.1.2
+ *  \version 1.2.0
  *  \date 2015
  *  \copyright The MIT License (MIT)
  *  \par
@@ -1491,15 +1491,17 @@ namespace GF
      *  \param[in] _height height of the array to be processed.
      *  \param[in] _f focal length.
      *  \param[in] _scaling factor by which to scale the depth values before building the point cloud.
+     *  \param[in] _rgbNorm flag to indicate whether to perform RGB normalization.
      *  \param[in] _staging flag to indicate whether or not to instantiate the staging buffers.
      */
-    void RGBDTo8D::init (unsigned int _width, unsigned int _height, float _f, float _scaling, Staging _staging)
+    void RGBDTo8D::init (unsigned int _width, unsigned int _height, float _f, float _scaling, int _rgbNorm, Staging _staging)
     {
         width = _width; height = _height; f = _f;
         points = width * height;
         bufferInSize = points * sizeof (cl_float);
         bufferOutSize = points * sizeof (cl_float8);
         scaling = _scaling;
+        rgbNorm = _rgbNorm;
         staging = _staging;
 
         try
@@ -1614,6 +1616,7 @@ namespace GF
         kernel.setArg (6, width);
         kernel.setArg (7, f);
         kernel.setArg (8, scaling);
+        kernel.setArg (9, rgbNorm);
     }
 
 
@@ -1700,8 +1703,7 @@ namespace GF
     }
 
 
-    /*! \return The focal length of the camera used.
-     */
+    /*! \return The focal length of the camera used. */
     float RGBDTo8D::getFocalLength ()
     {
         return f;
@@ -1719,8 +1721,7 @@ namespace GF
     }
 
 
-    /*! \return The scaling factor.
-     */
+    /*! \return The scaling factor. */
     float RGBDTo8D::getScaling ()
     {
         return scaling;
@@ -1735,6 +1736,249 @@ namespace GF
     {
         scaling = _scaling;
         kernel.setArg (8, scaling);
+    }
+
+
+    /*! \return The flag for RGB normalization. */
+    int RGBDTo8D::getRGBNorm ()
+    {
+        return rgbNorm;
+    }
+
+
+    /*! \details Updates the flag for RGB normalization.
+     *
+     *  \param[in] _rgbNorm flag that indicates whether to perform RGB normalization.
+     */
+    void RGBDTo8D::setRGBNorm (int _rgbNorm)
+    {
+        rgbNorm = _rgbNorm;
+        kernel.setArg (9, rgbNorm);
+    }
+
+
+    /*! \param[in] _env opencl environment.
+     *  \param[in] _info opencl configuration. Specifies the context, queue, etc, to be used.
+     */
+    SplitPC8D::SplitPC8D (clutils::CLEnv &_env, clutils::CLEnvInfo<1> _info) : 
+        env (_env), info (_info), 
+        context (env.getContext (info.pIdx)), 
+        queue (env.getQueue (info.ctxIdx, info.qIdx[0])), 
+        kernel (env.getProgram (info.pgIdx), "splitPC8D")
+    {
+    }
+
+
+    /*! \details This interface exists to allow CL memory sharing between different kernels.
+     *
+     *  \param[in] mem enumeration value specifying the requested memory object.
+     *  \return A reference to the requested memory object.
+     */
+    cl::Memory& SplitPC8D::get (SplitPC8D::Memory mem)
+    {
+        switch (mem)
+        {
+            case SplitPC8D::Memory::H_IN:
+                return hBufferIn;
+            case SplitPC8D::Memory::H_OUT_PC4D:
+                return hBufferOutPC4D;
+            case SplitPC8D::Memory::H_OUT_RGBA:
+                return hBufferOutRGBA;
+            case SplitPC8D::Memory::D_IN:
+                return dBufferIn;
+            case SplitPC8D::Memory::D_OUT_PC4D:
+                return dBufferOutPC4D;
+            case SplitPC8D::Memory::D_OUT_RGBA:
+                return dBufferOutRGBA;
+        }
+    }
+
+
+    /*! \details Sets up memory objects as necessary, and defines the kernel workspaces.
+     *  \note If you have assigned a memory object to one member variable of the class 
+     *        before the call to `init`, then that memory will be maintained. Otherwise, 
+     *        a new memory object will be created.
+     *        
+     *  \param[in] _n number of points in the point cloud.
+     *  \param[in] _offset number of points to skip in the output arrays. The kernel will 
+     *                     write in the output arrays starting at position `_offset` (`cl\_float4` 
+     *                     types are considered). Use the maximum offset you expect to need, so 
+     *                     the required memory can be allocated. You can change it afterwards 
+     *                     dynamically to the one required at any moment.
+     *  \param[in] _staging flag to indicate whether or not to instantiate the staging buffers.
+     */
+    void SplitPC8D::init (unsigned int _n, unsigned int _offset, Staging _staging)
+    {
+        n = _n;
+        offset = _offset;
+        bufferInSize = n * sizeof (cl_float8);
+        bufferOutSize = (offset + n) * sizeof (cl_float4);
+        staging = _staging;
+
+        try
+        {
+            if (n == 0)
+                throw "The point cloud cannot be empty";
+        }
+        catch (const char *error)
+        {
+            std::cerr << "Error[SplitPC8D]: " << error << std::endl;
+            exit (EXIT_FAILURE);
+        }
+
+        // Set workspace
+        global = cl::NDRange (n);
+
+        // Create staging buffers
+        bool io = false;
+        switch (staging)
+        {
+            case Staging::NONE:
+                hPtrIn = nullptr;
+                hPtrOutPC4D = nullptr;
+                hPtrOutRGBA = nullptr;
+                break;
+
+            case Staging::IO:
+                io = true;
+
+            case Staging::I:
+                if (hBufferIn () == nullptr)
+                    hBufferIn = cl::Buffer (context, CL_MEM_ALLOC_HOST_PTR, bufferInSize);
+
+                hPtrIn = (cl_float *) queue.enqueueMapBuffer (
+                    hBufferIn, CL_FALSE, CL_MAP_WRITE, 0, bufferInSize);
+                queue.enqueueUnmapMemObject (hBufferIn, hPtrIn);
+
+                if (!io)
+                {
+                    queue.finish ();
+                    hPtrOutPC4D = nullptr;
+                    hPtrOutRGBA = nullptr;
+                    break;
+                }
+
+            case Staging::O:
+                if (hBufferOutPC4D () == nullptr)
+                    hBufferOutPC4D = cl::Buffer (context, CL_MEM_ALLOC_HOST_PTR, bufferOutSize);
+                if (hBufferOutRGBA () == nullptr)
+                    hBufferOutRGBA = cl::Buffer (context, CL_MEM_ALLOC_HOST_PTR, bufferOutSize);
+
+                hPtrOutPC4D = (cl_float *) queue.enqueueMapBuffer (
+                    hBufferOutPC4D, CL_FALSE, CL_MAP_READ, 0, bufferOutSize);
+                hPtrOutRGBA = (cl_float *) queue.enqueueMapBuffer (
+                    hBufferOutRGBA, CL_FALSE, CL_MAP_READ, 0, bufferOutSize);
+                queue.enqueueUnmapMemObject (hBufferOutPC4D, hPtrOutPC4D);
+                queue.enqueueUnmapMemObject (hBufferOutRGBA, hPtrOutRGBA);
+                queue.finish ();
+
+                if (!io) hPtrIn = nullptr;
+                break;
+        }
+        
+        // Create device buffers
+        if (dBufferIn () == nullptr)
+            dBufferIn = cl::Buffer (context, CL_MEM_READ_ONLY, bufferInSize);
+        if (dBufferOutPC4D () == nullptr)
+            dBufferOutPC4D = cl::Buffer (context, CL_MEM_WRITE_ONLY, bufferOutSize);
+        if (dBufferOutRGBA () == nullptr)
+            dBufferOutRGBA = cl::Buffer (context, CL_MEM_WRITE_ONLY, bufferOutSize);
+
+        // Set kernel arguments
+        kernel.setArg (0, dBufferIn);
+        kernel.setArg (1, dBufferOutPC4D);
+        kernel.setArg (2, dBufferOutRGBA);
+        kernel.setArg (3, offset);
+    }
+
+
+    /*! \details The transfer happens from a staging buffer on the host to the 
+     *           associated (specified) device buffer.
+     *  
+     *  \param[in] mem enumeration value specifying an input device buffer.
+     *  \param[in] ptr a pointer to an array holding input data. If not NULL, the 
+     *                 data from `ptr` will be copied to the associated staging buffer.
+     *  \param[in] block a flag to indicate whether to perform a blocking 
+     *                   or a non-blocking operation.
+     *  \param[in] events a wait-list of events.
+     *  \param[out] event event associated with the write operation to the device buffer.
+     */
+    void SplitPC8D::write (SplitPC8D::Memory mem, void *ptr, bool block, 
+                           const std::vector<cl::Event> *events, cl::Event *event)
+    {
+        if (staging == Staging::I || staging == Staging::IO)
+        {
+            switch (mem)
+            {
+                case SplitPC8D::Memory::D_IN:
+                    if (ptr != nullptr)
+                        std::copy ((cl_float8 *) ptr, (cl_float8 *) ptr + n, (cl_float8 *) hPtrIn);
+                    queue.enqueueWriteBuffer (dBufferIn, block, 0, bufferInSize, hPtrIn, events, event);
+                    break;
+                default:
+                    break;
+            }
+        }
+    }
+
+
+    /*! \details The transfer happens from a device buffer to the associated 
+     *           (specified) staging buffer on the host.
+     *  
+     *  \param[in] mem enumeration value specifying an output staging buffer.
+     *  \param[in] block a flag to indicate whether to perform a blocking 
+     *                   or a non-blocking operation.
+     *  \param[in] events a wait-list of events.
+     *  \param[out] event event associated with the read operation to the staging buffer.
+     */
+    void* SplitPC8D::read (SplitPC8D::Memory mem, bool block, 
+                           const std::vector<cl::Event> *events, cl::Event *event)
+    {
+        if (staging == Staging::O || staging == Staging::IO)
+        {
+            switch (mem)
+            {
+                case SplitPC8D::Memory::H_OUT_PC4D:
+                    queue.enqueueReadBuffer (dBufferOutPC4D, block, 0, bufferOutSize, hPtrOutPC4D, events, event);
+                    return hPtrOutPC4D;
+                case SplitPC8D::Memory::H_OUT_RGBA:
+                    queue.enqueueReadBuffer (dBufferOutRGBA, block, 0, bufferOutSize, hPtrOutRGBA, events, event);
+                    return hPtrOutRGBA;
+                default:
+                    return nullptr;
+            }
+        }
+        return nullptr;
+    }
+
+
+    /*! \details The function call is non-blocking.
+     *
+     *  \param[in] events a wait-list of events.
+     *  \param[out] event event associated with the last kernel execution.
+     */
+    void SplitPC8D::run (const std::vector<cl::Event> *events, cl::Event *event)
+    {
+        queue.enqueueNDRangeKernel (kernel, cl::NullRange, global, cl::NullRange, events, event);
+    }
+
+
+    /*! \return The offset.
+     */
+    unsigned int SplitPC8D::getOffset ()
+    {
+        return offset;
+    }
+
+
+    /*! \details Updates the kernel argument for the offset.
+     *
+     *  \param[in] _offset the offset to set.
+     */
+    void SplitPC8D::setOffset (unsigned int _offset)
+    {
+        offset = _offset;
+        kernel.setArg (3, offset);
     }
 
 
@@ -1928,8 +2172,8 @@ namespace GF
         env (_env), info (_info), 
         context (env.getContext (info.pIdx)), 
         queue (env.getQueue (info.ctxIdx, info.qIdx[0])), 
-        kernelScan (env.getProgram (info.pgIdx), "inclusveScan_f"), 
-        kernelSumsScan (env.getProgram (info.pgIdx), "inclusveScan_f"), 
+        kernelScan (env.getProgram (info.pgIdx), "inclusiveScan_f"), 
+        kernelSumsScan (env.getProgram (info.pgIdx), "inclusiveScan_f"), 
         kernelAddSums (env.getProgram (info.pgIdx), "addGroupSums_f")
     {
         wgMultiple = kernelScan.getWorkGroupInfo
@@ -3250,17 +3494,20 @@ namespace GF
      *  \param[in] _zero_out flag to indicate whether or not to zero out invalid pixels. 
      *                       For more information, look at `gf_q`'s documentation 
      *                       in `kernels/guidedFilter_kernels.cl`.
-     *  \param[in] _scaling scaling factor applied internally to `BoxFilterSAT`.
+     *  \param[in] _boxScaling scaling factor applied internally to `BoxFilterSAT`.
+     *  \param[in] _outputScaling scaling factor applied to the output array. Set this to `1/s`, if 
+     *                            you had to apply an `s` scaling to the input array before processing.
      *  \param[in] _staging flag to indicate whether or not to instantiate the staging buffers.
      */
     void GuidedFilter<GuidedFilterConfig::I_EQ_P>::init (
-        unsigned int _width, unsigned int _height, int _radius, 
-        float _eps, int _zero_out, float _scaling, Staging _staging)
+        unsigned int _width, unsigned int _height, int _radius, float _eps, 
+        int _zero_out, float _boxScaling, float _outputScaling, Staging _staging)
     {
         width = _width; height = _height; radius = _radius; eps = _eps;
         bufferSize = width * height * sizeof (cl_float);
         zero_out = _zero_out;
-        scaling = _scaling;
+        boxScaling = _boxScaling;
+        outputScaling = _outputScaling;
         staging = _staging;
 
         try
@@ -3325,7 +3572,7 @@ namespace GF
 
         mean_p.get (BoxFilterSAT::Memory::D_IN) = dBufferIn;
         mean_p.get (BoxFilterSAT::Memory::D_OUT) = cl::Buffer (context, CL_MEM_READ_WRITE, bufferSize);
-        mean_p.init (width, height, radius, scaling, Staging::NONE);
+        mean_p.init (width, height, radius, boxScaling, Staging::NONE);
 
         squared.get (Math::Pown::Memory::D_IN) = dBufferIn;
         squared.get (Math::Pown::Memory::D_OUT) = cl::Buffer (context, CL_MEM_READ_WRITE, bufferSize);
@@ -3333,7 +3580,7 @@ namespace GF
 
         mean_p2.get (BoxFilterSAT::Memory::D_IN) = squared.get (Math::Pown::Memory::D_OUT);
         mean_p2.get (BoxFilterSAT::Memory::D_OUT) = cl::Buffer (context, CL_MEM_READ_WRITE, bufferSize);
-        mean_p2.init (width, height, radius, scaling, Staging::NONE);
+        mean_p2.init (width, height, radius, boxScaling, Staging::NONE);
 
         dBufferOutA = cl::Buffer (context, CL_MEM_READ_WRITE, bufferSize);
         dBufferOutB = cl::Buffer (context, CL_MEM_READ_WRITE, bufferSize);
@@ -3345,17 +3592,18 @@ namespace GF
 
         mean_a.get (BoxFilterSAT::Memory::D_IN) = dBufferOutA;
         mean_a.get (BoxFilterSAT::Memory::D_OUT) = cl::Buffer (context, CL_MEM_READ_WRITE, bufferSize);
-        mean_a.init (width, height, radius, scaling, Staging::NONE);
+        mean_a.init (width, height, radius, boxScaling, Staging::NONE);
 
         mean_b.get (BoxFilterSAT::Memory::D_IN) = dBufferOutB;
         mean_b.get (BoxFilterSAT::Memory::D_OUT) = cl::Buffer (context, CL_MEM_READ_WRITE, bufferSize);
-        mean_b.init (width, height, radius, scaling, Staging::NONE);
+        mean_b.init (width, height, radius, boxScaling, Staging::NONE);
 
         q.setArg (0, dBufferIn);
         q.setArg (1, mean_a.get (BoxFilterSAT::Memory::D_OUT));
         q.setArg (2, mean_b.get (BoxFilterSAT::Memory::D_OUT));
         q.setArg (3, dBufferOut);
         q.setArg (4, zero_out);
+        q.setArg (5, outputScaling);
         
         // Set workspaces (common to both own kernels: ab, q)
         global = cl::NDRange (width * height / 4);
@@ -3482,24 +3730,46 @@ namespace GF
 
     /*! \return The scaling factor applied internally to `BoxFilterSAT`.
      */
-    float GuidedFilter<GuidedFilterConfig::I_EQ_P>::getScaling ()
+    float GuidedFilter<GuidedFilterConfig::I_EQ_P>::getBoxScaling ()
     {
-        return scaling;
+        return boxScaling;
     }
 
 
     /*! \details Updates the kernel argument for internal scaling 
      *           of the array elements in `BoxFilterSAT`.
      *
-     *  \param[in] _scaling scaling factor for `BoxFilterSAT`.
+     *  \param[in] _boxScaling scaling factor for `BoxFilterSAT`.
      */
-    void GuidedFilter<GuidedFilterConfig::I_EQ_P>::setScaling (float _scaling)
+    void GuidedFilter<GuidedFilterConfig::I_EQ_P>::setBoxScaling (float _boxScaling)
     {
-        scaling = _scaling;
-        mean_p.setScaling (scaling);
-        mean_p2.setScaling (scaling);
-        mean_a.setScaling (scaling);
-        mean_b.setScaling (scaling);
+        boxScaling = _boxScaling;
+        mean_p.setScaling (boxScaling);
+        mean_p2.setScaling (boxScaling);
+        mean_a.setScaling (boxScaling);
+        mean_b.setScaling (boxScaling);
+    }
+
+
+    /*! \return The scaling factor for the output array.
+     */
+    float GuidedFilter<GuidedFilterConfig::I_EQ_P>::getOutputScaling ()
+    {
+        return outputScaling;
+    }
+
+
+    /*! \details Updates the kernel argument for scaling of the output array.
+     *
+     *  \param[in] _outputScaling scaling factor for the output array.
+     */
+    void GuidedFilter<GuidedFilterConfig::I_EQ_P>::setOutputScaling (float _outputScaling)
+    {
+        outputScaling = _outputScaling;
+        mean_p.setScaling (outputScaling);
+        mean_p2.setScaling (outputScaling);
+        mean_a.setScaling (outputScaling);
+        mean_b.setScaling (outputScaling);
     }
 
 
@@ -3591,17 +3861,17 @@ namespace GF
      *  \param[in] _zero_out flag to indicate whether or not to zero out invalid pixels. 
      *                       For more information, look at `gf_q`'s documentation 
      *                       in `kernels/guidedFilter_kernels.cl`.
-     *  \param[in] _scaling scaling factor applied internally to `BoxFilterSAT`.
+     *  \param[in] _boxScaling scaling factor applied internally to `BoxFilterSAT`.
      *  \param[in] _staging flag to indicate whether or not to instantiate the staging buffers.
      */
     void GuidedFilter<GuidedFilterConfig::I_NEQ_P>::init (
         unsigned int _width, unsigned int _height, int _radius, float _eps, 
-        int _zero_out, float _scaling, Staging _staging)
+        int _zero_out, float _boxScaling, Staging _staging)
     {
         width = _width; height = _height; radius = _radius; eps = _eps;
         bufferSize = width * height * sizeof (cl_float);
         zero_out = _zero_out;
-        scaling = _scaling;
+        boxScaling = _boxScaling;
         staging = _staging;
 
         try
@@ -3674,11 +3944,11 @@ namespace GF
 
         mean_I.get (BoxFilterSAT::Memory::D_IN) = dBufferInI;
         mean_I.get (BoxFilterSAT::Memory::D_OUT) = cl::Buffer (context, CL_MEM_READ_WRITE, bufferSize);
-        mean_I.init (width, height, radius, scaling, Staging::NONE);
+        mean_I.init (width, height, radius, boxScaling, Staging::NONE);
 
         mean_p.get (BoxFilterSAT::Memory::D_IN) = dBufferInP;
         mean_p.get (BoxFilterSAT::Memory::D_OUT) = cl::Buffer (context, CL_MEM_READ_WRITE, bufferSize);
-        mean_p.init (width, height, radius, scaling, Staging::NONE);
+        mean_p.init (width, height, radius, boxScaling, Staging::NONE);
 
         mult_II.get (Math::Mult::Memory::D_IN_A) = dBufferInI;
         mult_II.get (Math::Mult::Memory::D_IN_B) = dBufferInI;
@@ -3692,11 +3962,11 @@ namespace GF
 
         corr_I.get (BoxFilterSAT::Memory::D_IN) = mult_II.get (Math::Mult::Memory::D_OUT);
         corr_I.get (BoxFilterSAT::Memory::D_OUT) = cl::Buffer (context, CL_MEM_READ_WRITE, bufferSize);
-        corr_I.init (width, height, radius, scaling, Staging::NONE);
+        corr_I.init (width, height, radius, boxScaling, Staging::NONE);
 
         corr_Ip.get (BoxFilterSAT::Memory::D_IN) = mult_Ip.get (Math::Mult::Memory::D_OUT);
         corr_Ip.get (BoxFilterSAT::Memory::D_OUT) = cl::Buffer (context, CL_MEM_READ_WRITE, bufferSize);
-        corr_Ip.init (width, height, radius, scaling, Staging::NONE);
+        corr_Ip.init (width, height, radius, boxScaling, Staging::NONE);
 
         dBufferOutVarI = cl::Buffer (context, CL_MEM_READ_WRITE, bufferSize);
         dBufferOutCovIp = cl::Buffer (context, CL_MEM_READ_WRITE, bufferSize);
@@ -3719,17 +3989,18 @@ namespace GF
 
         mean_a.get (BoxFilterSAT::Memory::D_IN) = dBufferOutA;
         mean_a.get (BoxFilterSAT::Memory::D_OUT) = cl::Buffer (context, CL_MEM_READ_WRITE, bufferSize);
-        mean_a.init (width, height, radius, scaling, Staging::NONE);
+        mean_a.init (width, height, radius, boxScaling, Staging::NONE);
 
         mean_b.get (BoxFilterSAT::Memory::D_IN) = dBufferOutB;
         mean_b.get (BoxFilterSAT::Memory::D_OUT) = cl::Buffer (context, CL_MEM_READ_WRITE, bufferSize);
-        mean_b.init (width, height, radius, scaling, Staging::NONE);
+        mean_b.init (width, height, radius, boxScaling, Staging::NONE);
 
         q.setArg (0, dBufferInI);
         q.setArg (1, mean_a.get (BoxFilterSAT::Memory::D_OUT));
         q.setArg (2, mean_b.get (BoxFilterSAT::Memory::D_OUT));
         q.setArg (3, dBufferOut);
         q.setArg (4, zero_out);
+        q.setArg (5, 1.f);
         
         // Set workspaces (common to both own kernels: ab, q)
         global = cl::NDRange (width * height / 4);
@@ -3869,9 +4140,9 @@ namespace GF
 
     /*! \return The scaling factor applied internally to `BoxFilterSAT`.
      */
-    float GuidedFilter<GuidedFilterConfig::I_NEQ_P>::getScaling ()
+    float GuidedFilter<GuidedFilterConfig::I_NEQ_P>::getBoxScaling ()
     {
-        return scaling;
+        return boxScaling;
     }
 
 
@@ -3880,15 +4151,15 @@ namespace GF
      *
      *  \param[in] _scaling scaling factor for `BoxFilterSAT`.
      */
-    void GuidedFilter<GuidedFilterConfig::I_NEQ_P>::setScaling (float _scaling)
+    void GuidedFilter<GuidedFilterConfig::I_NEQ_P>::setBoxScaling (float _boxScaling)
     {
-        scaling = _scaling;
-        mean_I.setScaling (scaling);
-        mean_p.setScaling (scaling);
-        corr_I.setScaling (scaling);
-        corr_Ip.setScaling (scaling);
-        mean_a.setScaling (scaling);
-        mean_b.setScaling (scaling);
+        boxScaling = _boxScaling;
+        mean_I.setScaling (boxScaling);
+        mean_p.setScaling (boxScaling);
+        corr_I.setScaling (boxScaling);
+        corr_Ip.setScaling (boxScaling);
+        mean_a.setScaling (boxScaling);
+        mean_b.setScaling (boxScaling);
     }
 
 
@@ -3909,6 +4180,7 @@ namespace GF
         zero_out = _zero_out;
         q.setArg (4, zero_out);
     }
+
 
     namespace Kinect
     {
@@ -4059,17 +4331,17 @@ namespace GF
             gfR.get (GuidedFilter<GuidedFilterConfig::I_EQ_P>::Memory::D_IN) = 
                 sRGB.get (SeparateRGB<SeparateRGBConfig::UCHAR_FLOAT>::Memory::D_OUT_R);
             gfR.get (GuidedFilter<GuidedFilterConfig::I_EQ_P>::Memory::D_OUT) = dBufferOutR;
-            gfR.init (width, height, radius, eps, 0, 1e-4f, Staging::NONE);
+            gfR.init (width, height, radius, eps, 0, 1e-4f, 1.f, Staging::NONE);
 
             gfG.get (GuidedFilter<GuidedFilterConfig::I_EQ_P>::Memory::D_IN) = 
                 sRGB.get (SeparateRGB<SeparateRGBConfig::UCHAR_FLOAT>::Memory::D_OUT_G);
             gfG.get (GuidedFilter<GuidedFilterConfig::I_EQ_P>::Memory::D_OUT) = dBufferOutG;
-            gfG.init (width, height, radius, eps, 0, 1e-4f, Staging::NONE);
+            gfG.init (width, height, radius, eps, 0, 1e-4f, 1.f, Staging::NONE);
 
             gfB.get (GuidedFilter<GuidedFilterConfig::I_EQ_P>::Memory::D_IN) = 
                 sRGB.get (SeparateRGB<SeparateRGBConfig::UCHAR_FLOAT>::Memory::D_OUT_B);
             gfB.get (GuidedFilter<GuidedFilterConfig::I_EQ_P>::Memory::D_OUT) = dBufferOutB;
-            gfB.init (width, height, radius, eps, 0, 1e-4f, Staging::NONE);
+            gfB.init (width, height, radius, eps, 0, 1e-4f, 1.f, Staging::NONE);
         }
 
 
@@ -4317,19 +4589,19 @@ namespace GF
                 sRGB.get (SeparateRGB<SeparateRGBConfig::UCHAR_FLOAT>::Memory::D_OUT_R);
             gfR.get (GuidedFilter<GuidedFilterConfig::I_EQ_P>::Memory::D_OUT) = 
                 cl::Buffer (context, CL_MEM_READ_WRITE, bufferOutSize / 3);
-            gfR.init (width, height, radius, eps, 0, 1e-4f, Staging::NONE);
+            gfR.init (width, height, radius, eps, 0, 1e-4f, 1.f, Staging::NONE);
 
             gfG.get (GuidedFilter<GuidedFilterConfig::I_EQ_P>::Memory::D_IN) = 
                 sRGB.get (SeparateRGB<SeparateRGBConfig::UCHAR_FLOAT>::Memory::D_OUT_G);
             gfG.get (GuidedFilter<GuidedFilterConfig::I_EQ_P>::Memory::D_OUT) = 
                 cl::Buffer (context, CL_MEM_READ_WRITE, bufferOutSize / 3);
-            gfG.init (width, height, radius, eps, 0, 1e-4f, Staging::NONE);
+            gfG.init (width, height, radius, eps, 0, 1e-4f, 1.f, Staging::NONE);
 
             gfB.get (GuidedFilter<GuidedFilterConfig::I_EQ_P>::Memory::D_IN) = 
                 sRGB.get (SeparateRGB<SeparateRGBConfig::UCHAR_FLOAT>::Memory::D_OUT_B);
             gfB.get (GuidedFilter<GuidedFilterConfig::I_EQ_P>::Memory::D_OUT) = 
                 cl::Buffer (context, CL_MEM_READ_WRITE, bufferOutSize / 3);
-            gfB.init (width, height, radius, eps, 0, 1e-4f, Staging::NONE);
+            gfB.init (width, height, radius, eps, 0, 1e-4f, 1.f, Staging::NONE);
 
             cRGB.get (CombineRGB<CombineRGBConfig::FLOAT_FLOAT>::Memory::D_IN_R) = 
                 gfR.get (GuidedFilter<GuidedFilterConfig::I_EQ_P>::Memory::D_OUT);
@@ -4504,9 +4776,10 @@ namespace GF
          *  \param[in] _height height of the input array to be processed.
          *  \param[in] _radius radius of the square filter window, i.e. \f$\ radius=filter\_width/2-1\f$.
          *  \param[in] _eps regularization parameter \f$ \epsilon \f$.
-         *  \param[in] _dScaling factor by which to scale the depth values. It's independent from
+         *  \param[in] _dScaling factor by which to scale the depth values. It's independent from the 
          *                       scaling applied in `BoxFilterSAT`. This is another level of scaling 
-         *                       applied before the processing by `GuidedFilter`.
+         *                       (internal to the algorithm) applied to the input array before the 
+         *                       processing by `GuidedFilter`.
          *  \param[in] _staging flag to indicate whether or not to instantiate the staging buffers.
          */
         void GuidedFilterDepth::init (
@@ -4572,7 +4845,7 @@ namespace GF
             gf.get (GuidedFilter<GuidedFilterConfig::I_EQ_P>::Memory::D_IN) = 
                 depth.get (Depth<DepthConfig::USHORT_FLOAT>::Memory::D_OUT);
             gf.get (GuidedFilter<GuidedFilterConfig::I_EQ_P>::Memory::D_OUT) = dBufferOut;
-            gf.init (width, height, radius, eps, 1, 1e-6f, Staging::NONE);
+            gf.init (width, height, radius, eps, 1, 1e-6f, 1.f / dScaling, Staging::NONE);
         }
 
 
@@ -4701,6 +4974,7 @@ namespace GF
         {
             dScaling = _dScaling;
             depth.setScaling (dScaling);
+            gf.setOutputScaling (1.f / dScaling);
         }
 
     }

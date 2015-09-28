@@ -1,7 +1,7 @@
 /*! \file guidedFilter_kernels.cl
  *  \brief Kernels for performing `Guided Image Filtering`.
  *  \author Nick Lamprianidis
- *  \version 1.0
+ *  \version 1.1
  *  \date 2015
  *  \copyright The MIT License (MIT)
  *  \par
@@ -72,11 +72,12 @@ void gf_ab (global float4 *mean_p, global float4 *mean_p2,
  *  \param[in] mean_a array of average \f$ a \f$ values in the local windows.
  *  \param[in] mean_b array of average \f$ b \f$ values in the local windows.
  *  \param[in] q output array \f$ q \f$.
- *  \param[in] zero_out flag to indicate whether or not to zero out invalid pixels.
+ *  \param[in] zero_out flag to indicate whether to zero out invalid pixels.
+ *  \param[in] scaling factor by which to scale the pixel values in the output array.
  */
 kernel
 void gf_q (global float4 *p, global float4 *mean_a, global float4 *mean_b, 
-           global float4 *q, int zero_out)
+           global float4 *q, int zero_out, float scaling)
 {
     int gX = get_global_id (0);
 
@@ -88,7 +89,7 @@ void gf_q (global float4 *p, global float4 *mean_a, global float4 *mean_b,
     int4 p_select = isequal (p_, 0.f) * zero_out;
     float4 q_z = select(q_, 0.f, p_select);
 
-    q[gX] = q_z;
+    q[gX] = scaling * q_z;
 }
 
 

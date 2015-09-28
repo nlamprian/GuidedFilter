@@ -1,7 +1,7 @@
 /*! \file imageSupport_kernels.cl
  *  \brief Kernels for manipulating images.
  *  \author Nick Lamprianidis
- *  \version 1.0
+ *  \version 1.1
  *  \date 2015
  *  \copyright The MIT License (MIT)
  *  \par
@@ -228,7 +228,7 @@ void combineRGBChannels_Float2Uchar (global float *r, global float *g, global fl
 }
 
 
-/*! \brief Transforms a depth image to a point cloud.
+/*! \brief Converts a buffer from type `uchort` to `float`.
  *  \note The global workspace should be one dimensional and equal to 
  *        the number of elements in the image divided by 4.
  *
@@ -277,8 +277,7 @@ void depthTo3D (global float *depth, global float4 *pCloud, float f, float scali
 
 
 /*! \brief Performs RGB color normalization.
- *  \details The normalization is approximate: 
- *           $$ \\hat{p}.i = \\frac{p.i}{p.r + p.g + p.b} * 255,\\ \\ i=\\{r,g,b\\} $$
+ *  \details That is $$ \\hat{p}.i = \\frac{p.i}{p.r + p.g + p.b},\\ \\ i=\\{r,g,b\\} $$
  *  \note The global workspace should be one-dimensional `(= # pixels in the input buffer)`.
  *
  *  \param[in] in original frame.
@@ -292,7 +291,7 @@ void rgbNorm (global float *in, global float *out)
     // Calculate normalizing factor
     float3 pixel = vload3 (gX, in);
     float sum_ = dot (pixel, 1.f);
-    float factor = select (255.f / sum_, 0.f, isequal(sum_, 0.f));
+    float factor = select (native_recip (sum_), 0.f, isequal (sum_, 0.f));
     
     // Normalize and store
     pixel *= factor;
@@ -300,11 +299,11 @@ void rgbNorm (global float *in, global float *out)
 }
 
 
-/*! \brief Fuses 3D space coordinates and RGB color values into 
- *         8D feature points (homogeneous coordinates + RGBA values).
+/*! \brief Fuses 3-D space coordinates and RGB color values into 
+ *         8-D feature points (homogeneous coordinates + RGBA values).
  *  \details Gathers the R, G, B channel values and assembles them into a pixel 
- *           with opacity set to 1.0. Transforms the depth values into 4D
- *           homogeneous coordinates, setting \f$ w=1 \f$.
+ *           with opacity set to 1.0. It can optionally perform RGB normalization. 
+ *           Transforms the depth values into 4-D homogeneous coordinates, setting \f$ w=1 \f$.
  *  \note The global workspace should be one-dimensional `(= # elements 
  *        in the input buffers)`. Both global and local workspaces 
  *        should be **multiples of 3**.
@@ -318,10 +317,11 @@ void rgbNorm (global float *in, global float *out)
  *  \param[in] cols number of columns (width) in the input images.
  *  \param[in] f focal length (for Kinect: 595.f).
  *  \param[in] scaling factor by which to scale the depth values before building the point cloud.
+ *  \param[in] rgb_norm flag to indicate whether to perform RGB normalization.
  */
 kernel
 void rgbdTo8D (global float *depth, global float *r, global float *g, global float *b, 
-               global float8 *p8D, local float *data, uint cols, float f, float scaling)
+               global float8 *p8D, local float *data, uint cols, float f, float scaling, int rgb_norm)
 {
     global float *addr[] = { r, g, b };
 
@@ -334,7 +334,7 @@ void rgbdTo8D (global float *depth, global float *r, global float *g, global flo
     uint lX = get_local_id (0);
     uint wgX = get_group_id (0);
 
-    // Collect RGBA values =====================================================
+    // Collect RGB values ======================================================
 
     // Each 1/3 work-items in the work-group reads in 
     // a triplet of values on channel, R, G, B, respectively
@@ -345,7 +345,17 @@ void rgbdTo8D (global float *depth, global float *r, global float *g, global flo
     barrier (CLK_LOCAL_MEM_FENCE);
 
     // Each work-item in the work-group assembles a pixel    
-    float4 color = { data[lX], data[lXdim + lX], data[2 * lXdim + lX], 1.f };
+    float3 pixel = (float3) (data[lX], data[lXdim + lX], data[2 * lXdim + lX]);
+
+    // Perform RGB normalization
+    if (rgb_norm)
+    {
+        float sum_ = dot (pixel, 1.f);
+        float factor = select (native_recip (sum_), 0.f, isequal (sum_, 0.f));
+        pixel *= factor;
+    }
+    
+    float4 color = (float4) (pixel, 1.f);
 
     // Build 3D coordinates ====================================================
 
@@ -361,4 +371,27 @@ void rgbdTo8D (global float *depth, global float *r, global float *g, global flo
 
     float8 point = (float8) (geometry, color);
     p8D[gX] = point;
+}
+
+
+/*! \brief Splits an 8-D point cloud into 4-D geometry points and RGBA color points.
+ *  \note The global workspace should be one-dimensional. The **x** dimension 
+ *        of the global workspace, \f$ gXdim \f$, should be equal to the number 
+ *        of points in the point cloud. The local workspace is irrelevant.
+ *
+ *  \param[in] pc8d array with 8-D points (homogeneous coordinates + RGBA values).
+ *  \param[out] pc4d array with 4-D geometry points.
+ *  \param[out] rgba array with 4-D color points.
+ *  \param[in] offset number of points to skip in the output arrays. The kernel will 
+ *                    write in the output arrays starting at position `offset`.
+ */
+kernel
+void splitPC8D (global float8 *pc8d, global float4 *pc4d, global float4 *rgba, unsigned int offset)
+{
+    uint gX = get_global_id (0);
+
+    float8 point = pc8d[gX];
+    size_t pos = offset + gX;
+    pc4d[pos] = point.lo;
+    rgba[pos] = point.hi;
 }

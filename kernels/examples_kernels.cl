@@ -44,7 +44,7 @@
  *  \param[out] out output RGBA image.
  *  \param[in] data local buffer with size `3 x (# work-items in work-group) x sizeof (float)` bytes.
  *  \param[in] width width the images.
- *  \param[in] norm flag to indicate whether or not to perform RGB normalization before storing the pixels.
+ *  \param[in] norm flag to indicate whether to perform RGB normalization before storing the pixels.
  */
 kernel
 void combineRGBGL (global float *r, global float *g, global float *b, 
@@ -75,7 +75,7 @@ void combineRGBGL (global float *r, global float *g, global float *b,
     if (norm)
     {
         float sum_ = dot (color, 1.f);
-        float factor = select (1.f / sum_, 0.f, isequal(sum_, 0.f));
+        float factor = select (native_recip (sum_), 0.f, isequal (sum_, 0.f));
         color *= factor;
     }
 
@@ -104,7 +104,7 @@ void combineRGBGL (global float *r, global float *g, global float *b,
  *  \param[out] out output RGBA image.
  *  \param[in] data local buffer with size `3 x (# work-items in work-group) x sizeof (float)` bytes.
  *  \param[in] width width the images.
- *  \param[in] norm flag to indicate whether or not to perform RGB normalization before storing the pixels.
+ *  \param[in] norm flag to indicate whether to perform RGB normalization before storing the pixels.
  */
 kernel
 void combineRGBGL_PC (global float *r, global float *g, global float *b, 
@@ -135,7 +135,7 @@ void combineRGBGL_PC (global float *r, global float *g, global float *b,
     if (norm)
     {
         float sum_ = dot (color, 1.f);
-        float factor = select (1.f / sum_, 0.f, isequal(sum_, 0.f));
+        float factor = select (native_recip (sum_), 0.f, isequal (sum_, 0.f));
         color *= factor;
     }
 

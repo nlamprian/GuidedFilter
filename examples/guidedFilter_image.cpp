@@ -6,7 +6,7 @@
  *           channels separately, and displays the original and filtered 
  *           images on the screen.
  *  \author Nick Lamprianidis
- *  \version 1.1.2
+ *  \version 1.2.0
  *  \date 2015
  *  \copyright The MIT License (MIT)
  *  \par
@@ -91,17 +91,17 @@ int main (int argc, char **argv)
         cl_algo::GF::GuidedFilter<Ip> gfR (clEnv, infoGF);
         gfR.get (cl_algo::GF::GuidedFilter<Ip>::Memory::D_IN) = rgb.get (cl_algo::GF::SeparateRGB<C1>::Memory::D_OUT_R);
         gfR.get (cl_algo::GF::GuidedFilter<Ip>::Memory::D_OUT) = cl::Buffer (context, CL_MEM_READ_WRITE, bufferSize);
-        gfR.init (width, height, gfRadius, gfEps, 0, 0.0001f, cl_algo::GF::Staging::NONE);
+        gfR.init (width, height, gfRadius, gfEps, 0, 0.0001f, 1.f, cl_algo::GF::Staging::NONE);
 
         cl_algo::GF::GuidedFilter<Ip> gfG (clEnv, infoGF);
         gfG.get (cl_algo::GF::GuidedFilter<Ip>::Memory::D_IN) = rgb.get (cl_algo::GF::SeparateRGB<C1>::Memory::D_OUT_G);
         gfG.get (cl_algo::GF::GuidedFilter<Ip>::Memory::D_OUT) = cl::Buffer (context, CL_MEM_READ_WRITE, bufferSize);
-        gfG.init (width, height, gfRadius, gfEps, 0, 0.0001f, cl_algo::GF::Staging::NONE);
+        gfG.init (width, height, gfRadius, gfEps, 0, 0.0001f, 1.f, cl_algo::GF::Staging::NONE);
 
         cl_algo::GF::GuidedFilter<Ip> gfB (clEnv, infoGF);
         gfB.get (cl_algo::GF::GuidedFilter<Ip>::Memory::D_IN) = rgb.get (cl_algo::GF::SeparateRGB<C1>::Memory::D_OUT_B);
         gfB.get (cl_algo::GF::GuidedFilter<Ip>::Memory::D_OUT) = cl::Buffer (context, CL_MEM_READ_WRITE, bufferSize);
-        gfB.init (width, height, gfRadius, gfEps, 0, 0.0001f, cl_algo::GF::Staging::NONE);
+        gfB.init (width, height, gfRadius, gfEps, 0, 0.0001f, 1.f, cl_algo::GF::Staging::NONE);
 
         const cl_algo::GF::CombineRGBConfig C2 = cl_algo::GF::CombineRGBConfig::FLOAT_FLOAT;
         cl_algo::GF::CombineRGB<C2> fRGB (clEnv, infoRGB);

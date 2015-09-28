@@ -1,7 +1,7 @@
 /*! \file helper_funcs.hpp
  *  \brief Declarations of helper functions for testing.
  *  \author Nick Lamprianidis
- *  \version 1.1.2
+ *  \version 1.2.0
  *  \date 2015
  *  \copyright The MIT License (MIT)
  *  \par
@@ -255,9 +255,10 @@ namespace GF
      *  \param[in] width width of the input arrays.
      *  \param[in] height height of the input arrays.
      *  \param[in] f focal length (for Kinect: 595.f).
+     *  \param[in] rgbNorm flag to indicate whether to perform RGB normalization.
      */
     template <typename T>
-    void cpuRGBDTo8D (T *D, T *R, T *G, T *B, cl_float8 *points, uint32_t width, uint32_t height, float f)
+    void cpuRGBDTo8D (T *D, T *R, T *G, T *B, cl_float8 *points, uint32_t width, uint32_t height, float f, bool rgbNorm)
     {
         for (uint row = 0; row < height; ++row)
         {
@@ -270,6 +271,15 @@ namespace GF
                 T g = G[i];
                 T b = B[i];
 
+                if (rgbNorm)
+                {
+                    T sum_ = r + g + b;
+                    T factor = (sum_ == 0.0) ? 0.0 : 1.0 / sum_;
+                    r *= factor;
+                    g *= factor;
+                    b *= factor;
+                }
+
                 points[i] = { (col - (width - 1) / 2.f) * (float) d / f,
                               (row - (height - 1) / 2.f) * (float) d / f,
                               (float) d, 1.f, r, g, b, 1.f };
@@ -278,9 +288,32 @@ namespace GF
     }
 
 
+    /*! \brief Splits an 8-D point cloud into 4-D geometry points and RGBA color points.
+     *  \details It is just a naive serial implementation.
+     *
+     *  \param[in] pc8d array with 8-D points (homogeneous coordiates + RGBA values).
+     *  \param[out] pc4d array with 4-D geometry points.
+     *  \param[out] rgba array with 4-D color points.
+     *  \param[in] n number of points in the 8-D point cloud.
+     */
+    template <typename T>
+    void cpuSplitPC8D (T *pc8d, T *pc4d, T *rgba, uint32_t n)
+    {
+        for (uint k = 0; k < n; ++k)
+        {
+            cl_float *point = pc8d + (k << 3);
+
+            for (uint j = 0; j < 4; ++j)
+            {
+                pc4d[(k << 2) + j] = point[j];
+                rgba[(k << 2) + j] = point[4 + j];
+            }
+        }
+    }
+
+
     /*! \brief Performs RGB color normalization.
-     *  \details The normalization is approximate: 
-     *           $$ \\hat{p}.i = \\frac{p.i}{p.r + p.g + p.b} * 255,\\ \\ i=\\{r,g,b\\} $$
+     *  \details That is $$ \\hat{p}.i = \\frac{p.i}{p.r + p.g + p.b},\\ \\ i=\\{r,g,b\\} $$
      *
      *  \tparam T type of the data to be handled.
      *  \param[in] in input data.
@@ -296,7 +329,8 @@ namespace GF
             for (uint col = 0; col < width; ++col)
             {   
                 uint rank = (row * width + col) * 3;
-                float factor = 255.f / (in[rank] + in[rank+1] + in[rank+2]);
+                T sum_ = in[rank] + in[rank+1] + in[rank+2];
+                T factor = (sum_ == 0) ? 0.0 : 1.0 / sum_;
                 out[rank] = (T) (factor * in[rank]);
                 out[rank+1] = (T) (factor * in[rank+1]); 
                 out[rank+2] = (T) (factor * in[rank+2]);

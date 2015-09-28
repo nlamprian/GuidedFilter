@@ -34,7 +34,7 @@
  *        performed per row, in parallel.
  *  \note The number of elements, `N`, in a row of the array should be a **multiple 
  *        of 4** (the data are handled as `float4`). The **x** dimension of the 
- *        global workspace, \f$ gXdim \f$, should be greater or equal to the number of 
+ *        global workspace, \f$ gXdim \f$, should be greater than or equal to the number of 
  *        elements in a row of the array divided by 8. That is, \f$ \ gXdim \geq N/8 \f$. 
  *        Each work-item handles `8 float` (= `2 float4`) elements in a row of the array. 
  *        The **y** dimension of the global workspace, \f$ gYdim \f$, should be equal 
@@ -65,8 +65,8 @@
  *  \param[in] scaling factor by which to scale the array elements before processing.
  */
 kernel
-void inclusveScan_f (global float4 *in, global float4 *out, local float *data, 
-                     global float *sums, uint n, float scaling)
+void inclusiveScan_f (global float4 *in, global float4 *out, local float *data, 
+                      global float *sums, uint n, float scaling)
 {
     // Workspace dimensions
     uint lXdim = get_local_size (0);

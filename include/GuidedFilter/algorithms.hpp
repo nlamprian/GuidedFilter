@@ -4,7 +4,7 @@
  *           initialize the necessary buffers, set up the workspaces, 
  *           and run the kernels.
  *  \author Nick Lamprianidis
- *  \version 1.1.2
+ *  \version 1.2.0
  *  \date 2015
  *  \copyright The MIT License (MIT)
  *  \par
@@ -761,7 +761,7 @@ namespace GF
         cl::Memory& get (RGBDTo8D::Memory mem);
         /*! \brief Configures kernel execution parameters. */
         void init (unsigned int _width, unsigned int _height, 
-                   float _f, float _scaling = 1.f, Staging _staging = Staging::IO);
+                   float _f, float _scaling = 1.f, int _rgbNorm = 0, Staging _staging = Staging::IO);
         /*! \brief Performs a data transfer to a device buffer. */
         void write (RGBDTo8D::Memory mem = RGBDTo8D::Memory::D_IN_D, void *ptr = nullptr, bool block = CL_FALSE, 
                     const std::vector<cl::Event> *events = nullptr, cl::Event *event = nullptr);
@@ -778,6 +778,10 @@ namespace GF
         float getScaling ();
         /*! \brief Sets the scaling factor. */
         void setScaling (float _scaling);
+        /*! \brief Gets the flag for RGB normalization. */
+        int getRGBNorm ();
+        /*! \brief Sets the flag for RGB normalization. */
+        void setRGBNorm (int _rgbNorm);
 
         cl_float *hPtrInD;  /*!< Mapping of the input staging buffer for the %Depth image. */
         cl_float *hPtrInR;  /*!< Mapping of the input staging buffer for channel R of the RGB image. */
@@ -797,6 +801,7 @@ namespace GF
         unsigned int width, height, points;
         unsigned int bufferInSize, bufferOutSize;
         float f, scaling;
+        int rgbNorm;
         cl::Buffer hBufferInD, hBufferInR, hBufferInG, hBufferInB, hBufferOut;
         cl::Buffer dBufferInD, dBufferInR, dBufferInG, dBufferInB, dBufferOut;
 
@@ -812,6 +817,101 @@ namespace GF
         double run (clutils::GPUTimer<period> &timer, const std::vector<cl::Event> *events = nullptr)
         {
             queue.enqueueNDRangeKernel (kernel, cl::NullRange, global, local, events, &timer.event ());
+            queue.flush (); timer.wait ();
+
+            return timer.duration ();
+        }
+
+    };
+
+
+    /*! \brief Interface class for the `splitPC8D` kernel.
+     *  \details `splitPC8D` splits an 8-D point cloud into 4-D geometry points and RGBA color points.
+     *           For more details, look at the kernel's documentation.
+     *  \note The `splitPC8D` kernel is available in `kernels/imageSupport_kernels.cl`.
+     *  \note The class creates its own buffers. If you would like to provide 
+     *        your own buffers, call `get` to get references to the placeholders 
+     *        within the class and assign them to your buffers. You will have to 
+     *        do this strictly before the call to `init`. You can also call `get` 
+     *        (after the call to `init`) to get a reference to a buffer within 
+     *        the class and assign it to another kernel class instance further 
+     *        down in your task pipeline.
+     *  
+     *        The following input/output `OpenCL` memory objects are created by a `SplitPC8D` instance:<br>
+     *        | Name | Type | Placement | I/O | Use | Properties | Size |
+     *        | ---  |:---: |   :---:   |:---:|:---:|   :---:    |:---: |
+     *        | H_IN      | Buffer | Host   | I | Staging     | CL_MEM_READ_WRITE | \f$width*height*sizeof\ (cl\_float8)\f$ |
+     *        | H_OUT_PC4D| Buffer | Host   | O | Staging     | CL_MEM_READ_WRITE | \f$width*height*sizeof\ (cl\_float4)\f$ |
+     *        | H_OUT_RGBA| Buffer | Host   | O | Staging     | CL_MEM_READ_WRITE | \f$width*height*sizeof\ (cl\_float4)\f$ |
+     *        | D_IN      | Buffer | Device | I | Processing  | CL_MEM_READ_ONLY  | \f$width*height*sizeof\ (cl\_float8)\f$ |
+     *        | D_OUT_PC4D| Buffer | Device | O | Processing  | CL_MEM_WRITE_ONLY | \f$width*height*sizeof\ (cl\_float4)\f$ |
+     *        | D_OUT_RGBA| Buffer | Device | O | Processing  | CL_MEM_WRITE_ONLY | \f$width*height*sizeof\ (cl\_float4)\f$ |
+     */
+    class SplitPC8D
+    {
+    public:
+        /*! \brief Enumerates the memory objects handled by the class.
+         *  \note `H_*` names refer to staging buffers on the host.
+         *  \note `D_*` names refer to buffers on the device.
+         */
+        enum class Memory : uint8_t
+        {
+            H_IN,        /*!< Input staging buffer for the 8-D point cloud. */
+            H_OUT_PC4D,  /*!< Output staging buffer for the 4-D homogeneous coordinates. */
+            H_OUT_RGBA,  /*!< Output staging buffer for the RGBA values. */
+            D_IN,        /*!< Input buffer for the 8-D point cloud. */
+            D_OUT_PC4D,  /*!< Output buffer for the 4-D homogeneous coordinates. */
+            D_OUT_RGBA   /*!< Output buffer for the RGBA values. */
+        };
+
+        /*! \brief Configures an OpenCL environment as specified by `_info`. */
+        SplitPC8D (clutils::CLEnv &_env, clutils::CLEnvInfo<1> _info);
+        /*! \brief Returns a reference to an internal memory object. */
+        cl::Memory& get (SplitPC8D::Memory mem);
+        /*! \brief Configures kernel execution parameters. */
+        void init (unsigned int _n, unsigned int _offset = 0, Staging _staging = Staging::IO);
+        /*! \brief Performs a data transfer to a device buffer. */
+        void write (SplitPC8D::Memory mem = SplitPC8D::Memory::D_IN, void *ptr = nullptr, bool block = CL_FALSE, 
+                    const std::vector<cl::Event> *events = nullptr, cl::Event *event = nullptr);
+        /*! \brief Performs a data transfer to a staging buffer. */
+        void* read (SplitPC8D::Memory mem = SplitPC8D::Memory::H_OUT_PC4D, bool block = CL_TRUE, 
+                    const std::vector<cl::Event> *events = nullptr, cl::Event *event = nullptr);
+        /*! \brief Executes the necessary kernels. */
+        void run (const std::vector<cl::Event> *events = nullptr, cl::Event *event = nullptr);
+        /*! \brief Gets the offset. */
+        unsigned int getOffset ();
+        /*! \brief Sets the offset. */
+        void setOffset (unsigned int _offset);
+
+        cl_float *hPtrIn;       /*!< Mapping of the input staging buffer for the 8-D point cloud. */
+        cl_float *hPtrOutPC4D;  /*!< Mapping of the output staging buffer for the 4-D homogeneous coordinates. */
+        cl_float *hPtrOutRGBA;  /*!< Mapping of the output staging buffer for the RGBA values. */
+
+    private:
+        clutils::CLEnv &env;
+        clutils::CLEnvInfo<1> info;
+        cl::Context context;
+        cl::CommandQueue queue;
+        cl::Kernel kernel;
+        cl::NDRange global;
+        Staging staging;
+        unsigned int n, offset;
+        unsigned int bufferInSize, bufferOutSize;
+        cl::Buffer hBufferIn, hBufferOutPC4D, hBufferOutRGBA;
+        cl::Buffer dBufferIn, dBufferOutPC4D, dBufferOutRGBA;
+
+    public:
+        /*! \brief Executes the necessary kernels.
+         *  \details This `run` instance is used for profiling.
+         *  
+         *  \param[in] timer `GPUTimer` that does the profiling of the kernel executions.
+         *  \param[in] events a wait-list of events.
+         *  \return Τhe total execution time measured by the timer.
+         */
+        template <typename period>
+        double run (clutils::GPUTimer<period> &timer, const std::vector<cl::Event> *events = nullptr)
+        {
+            queue.enqueueNDRangeKernel (kernel, cl::NullRange, global, cl::NullRange, events, &timer.event ());
             queue.flush (); timer.wait ();
 
             return timer.duration ();
@@ -1470,8 +1570,8 @@ namespace GF
         /*! \brief Returns a reference to an internal memory object. */
         cl::Memory& get (GuidedFilter::Memory mem);
         /*! \brief Configures kernel execution parameters. */
-        void init (unsigned int _width, unsigned int _height, int _radius, float _eps, 
-                   int _zero_out = 0, float _scaling = 1e-4f, Staging _staging = Staging::IO);
+        void init (unsigned int _width, unsigned int _height, int _radius, float _eps, int _zero_out = 0, 
+                   float _boxScaling = 1e-4f, float _outputScaling = 1.f, Staging _staging = Staging::IO);
         /*! \brief Performs a data transfer to a device buffer. */
         void write (GuidedFilter::Memory mem = GuidedFilter::Memory::D_IN, void *ptr = nullptr, bool block = CL_FALSE, 
                     const std::vector<cl::Event> *events = nullptr, cl::Event *event = nullptr);
@@ -1488,10 +1588,14 @@ namespace GF
         float getEps ();
         /*! \brief Sets the regularization parameter \f$\epsilon\f$. */
         void setEps (float _eps);
-        /*! \brief Gets the scaling factor. */
-        float getScaling ();
-        /*! \brief Sets the scaling factor. */
-        void setScaling (float _scaling);
+        /*! \brief Gets the scaling factor for the `BoxFilterSAT`. */
+        float getBoxScaling ();
+        /*! \brief Sets the scaling factor for the `BoxFilterSAT`. */
+        void setBoxScaling (float _boxScaling);
+        /*! \brief Gets the scaling factor for the output array. */
+        float getOutputScaling ();
+        /*! \brief Sets the scaling factor for the output array. */
+        void setOutputScaling (float _outputScaling);
         /*! \brief Gets the `zero_out` flag. */
         int getZeroing ();
         /*! \brief Sets the `zero_out` flag. */
@@ -1513,7 +1617,7 @@ namespace GF
         unsigned int width, height, bufferSize;
         int radius; float eps;
         int zero_out;
-        float scaling;
+        float boxScaling, outputScaling;
         cl::Buffer hBufferIn, hBufferOut;
         cl::Buffer dBufferIn, dBufferOut;
         cl::Buffer dBufferOutA, dBufferOutB;
@@ -1612,7 +1716,7 @@ namespace GF
         cl::Memory& get (GuidedFilter::Memory mem);
         /*! \brief Configures kernel execution parameters. */
         void init (unsigned int _width, unsigned int _height, int _radius, float _eps, 
-                   int _zero_out = 0, float _scaling = 1e-4f, Staging _staging = Staging::IO);
+                   int _zero_out = 0, float _boxScaling = 1e-4f, Staging _staging = Staging::IO);
         /*! \brief Performs a data transfer to a device buffer. */
         void write (GuidedFilter::Memory mem = GuidedFilter::Memory::D_IN_I, void *ptr = nullptr, bool block = CL_FALSE, 
                     const std::vector<cl::Event> *events = nullptr, cl::Event *event = nullptr);
@@ -1629,10 +1733,10 @@ namespace GF
         float getEps ();
         /*! \brief Sets the regularization parameter \f$\epsilon\f$. */
         void setEps (float _eps);
-        /*! \brief Gets the scaling factor. */
-        float getScaling ();
-        /*! \brief Sets the scaling factor. */
-        void setScaling (float _scaling);
+        /*! \brief Gets the scaling factor for the `BoxFilterSAT`. */
+        float getBoxScaling ();
+        /*! \brief Sets the scaling factor for the `BoxFilterSAT`. */
+        void setBoxScaling (float _boxScaling);
         /*! \brief Gets the `zero_out` flag. */
         int getZeroing ();
         /*! \brief Sets the `zero_out` flag. */
@@ -1655,7 +1759,7 @@ namespace GF
         unsigned int width, height, bufferSize;
         int radius; float eps;
         int zero_out;
-        float scaling;
+        float boxScaling;
         cl::Buffer hBufferInI, hBufferInP, hBufferOut;
         cl::Buffer dBufferInI, dBufferInP, dBufferOut;
         cl::Buffer dBufferOutVarI, dBufferOutCovIp;
