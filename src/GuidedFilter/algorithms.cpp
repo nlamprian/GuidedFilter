@@ -41,7 +41,7 @@
  *        environment. This means, there is a known context on which they will 
  *        operate, there is a known command queue which they will use, and all 
  *        the necessary kernel code has been compiled. For more info on **CLUtils**, 
- *        you can check the [online documentation](http://clutils.paign10.me/).
+ *        you can check the [online documentation](https://clutils.nlamprian.me/).
  */
 namespace cl_algo
 {

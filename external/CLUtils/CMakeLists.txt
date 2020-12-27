@@ -4,7 +4,7 @@ set ( CLUtils_TARGET CLUtils PARENT_SCOPE )
 
 ExternalProject_Add ( 
     CLUtils 
-    GIT_REPOSITORY https://github.com/pAIgn10/CLUtils.git 
+    GIT_REPOSITORY https://github.com/nlamprian/CLUtils.git
     PREFIX ${CMAKE_CURRENT_BINARY_DIR} 
     CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX} # -DBUILD_TESTS=ON 
     INSTALL_COMMAND ""
