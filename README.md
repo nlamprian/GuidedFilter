@@ -1,4 +1,4 @@
-guided-filter.paign10.me
-==================
+guided-filter.nlamprian.me
+==========================
 
 This is the doxygen documentation for `GuidedFilter`.

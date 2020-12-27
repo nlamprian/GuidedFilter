@@ -6,3 +6,4 @@ gem 'jemoji'
 gem 'jekyll-redirect-from'
 gem 'jekyll-sitemap'
 gem 'font-awesome-sass'
+gem "rouge"

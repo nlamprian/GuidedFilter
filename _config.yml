@@ -1,11 +1,14 @@
 title: Documentation
 doc_version: 1.2.0
-url: "http://guided-filter.paign10.me"
+url: https://guided-filter.nlamprian.me
 
 permalink: /:categories/:title
 markdown: kramdown
-highlighter: pygments
+kramdown:
+  input: GFM 
+  syntax_highlighter: rouge
 
 gems:
   - jekyll-sitemap
   - jemoji
+  - rouge

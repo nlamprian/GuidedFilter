@@ -45,8 +45,8 @@
    &#160;<span id="projectnumber">1.2.0</span>
    </div>
   </td>
-  <td><a id="repo" href="https://github.com/pAIgn10/GuidedFilter"><i class="fa fa-github"></i><span id="repo-text">&nbsp;Hosted by GitHub</span></a></td>
-  <td id="projectlogo"><a href="http://paign10.me"><img alt="Logo" src="logo.png"/></a></td>
+  <td><a id="repo" href="https://github.com/nlamprian/GuidedFilter"><i class="fa fa-github"></i><span id="repo-text">&nbsp;Hosted by GitHub</span></a></td>
+  <td id="projectlogo"><a href="http://nlamprian.me"><img alt="Logo" src="logo.png"/></a></td>
  </tr>
  </tbody>
 </table>
@@ -103,7 +103,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <div class="textblock"><p><br />
  <code>GuidedFilter</code> is an implementation of the <a href="http://research.microsoft.com/en-us/um/people/kahe/eccv10/">Guided Image Filtering</a> algorithm in OpenCL. The <code>Guided Filter</code> is an image filter with many applications, one of which is <b>edge-preserving smoothing</b>. It has a non-approximate algorithm which is <code>O(1)</code> in the filter window size. It has excellent performance characteristics which make it a great alternative to the popular <code>Bilateral Filter</code>.</p>
 <div class="image">
-<img src="http://i76.photobucket.com/albums/j16/paign10/www-hdwallpaperscool-com_zpsn7dqj7j4.png"  alt="hdwallpaperscool-com"/>
+<img src="https://github.com/nlamprian/GuidedFilter/wiki/assets/filter.png"  alt="hdwallpaperscool-com"/>
 </div>
 <p>You can watch how the algorithm performs as a smoothing operator in the following two videos:</p><ol type="1">
 <li><a href="https://www.youtube.com/watch?v=cFQu10OsztI">Guided Image Filtering on Kinect RGB stream with OpenCL</a></li>
@@ -115,19 +115,19 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <h1>Note</h1>
 <hr/>
 <p> The code was developed and tested on <code>Ubuntu 14.04.2</code>, on a system with an <code>AMD R9 270X</code> GPU.</p>
-<p>For more details on the implemented algorithms, take a look at the project's <a href="https://github.com/pAIgn10/GuidedFilter/wiki/Algorithms">wiki</a>. <br />
+<p>For more details on the implemented algorithms, take a look at the project's <a href="https://github.com/nlamprian/GuidedFilter/wiki/Algorithms">wiki</a>. <br />
 <br />
 </p>
 <h1>Dependencies</h1>
 <hr/>
-<p> The project has a dependency on <a href="https://github.com/pAIgn10/CLUtils">CLUtils</a> (which is automatically downloaded by cmake). If you'd like to remove this dependency, you should be able to modify the kernel interface classes with minimal effort.</p>
+<p> The project has a dependency on <a href="https://github.com/nlamprian/CLUtils">CLUtils</a> (which is automatically downloaded by cmake). If you'd like to remove this dependency, you should be able to modify the kernel interface classes with minimal effort.</p>
 <p>Currently, there are 3 example applications. For <code>guided_filter_image</code>, you'll need <a href="https://github.com/jayrambhia/Install-OpenCV">OpenCV</a>. For <code>guided_filter_kinect_rgb</code> and <code>guided_filter_kinect_point_cloud</code>, you'll need a Kinect and <a href="https://github.com/OpenKinect/libfreenect/">libfreenect</a>. <br />
 <br />
 </p>
 <h1>Compilation</h1>
 <hr/>
  <blockquote class="doxtable">
-<p>git clone <a href="https://github.com/pAIgn10/GuidedFilter.git">https://github.com/pAIgn10/GuidedFilter.git</a> <br />
+<p>git clone <a href="https://github.com/nlamprian/GuidedFilter.git">https://github.com/nlamprian/GuidedFilter.git</a> <br />
  cd GuidedFilter</p>
 <p>mkdir build <br />
  cd build</p>
